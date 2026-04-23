@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       conversation_members: {
         Row: {
           conversation_id: string
@@ -404,6 +425,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_delete_conversation: {
+        Args: { _conv_id: string; _user_id: string }
+        Returns: boolean
+      }
       create_conversation: {
         Args: { _event_id?: string; _is_direct: boolean; _title: string }
         Returns: string
