@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2 } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
@@ -52,6 +52,22 @@ interface ProfileRow {
   display_name: string;
 }
 
+interface ExpenseRow {
+  id: string;
+  event_id: string;
+  paid_by: string;
+  title: string;
+  amount: number;
+  notes: string | null;
+}
+
+interface ExpenseShareRow {
+  id: string;
+  expense_id: string;
+  user_id: string;
+  share_amount: number;
+}
+
 function EventsPage() {
   const { user, profile } = useAuth();
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -60,11 +76,14 @@ function EventsPage() {
   const [proposals, setProposals] = useState<ProposalRow[]>([]);
   const [votes, setVotes] = useState<VoteRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
+  const [shares, setShares] = useState<ExpenseShareRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileRow>>({});
   const [showNew, setShowNew] = useState(false);
   const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "" });
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
+  const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "" });
 
   const activeEvent = events.find((e) => e.id === activeId);
 
@@ -78,20 +97,29 @@ function EventsPage() {
   };
 
   const loadEventDetails = async (eventId: string) => {
-    const [{ data: r }, { data: p }, { data: t }] = await Promise.all([
+    const [{ data: r }, { data: p }, { data: t }, { data: ex }] = await Promise.all([
       supabase.from("rsvps").select("*").eq("event_id", eventId),
       supabase.from("time_proposals").select("*").eq("event_id", eventId).order("proposed_time"),
       supabase.from("tasks").select("*").eq("event_id", eventId).order("created_at"),
+      supabase.from("expenses").select("*").eq("event_id", eventId).order("created_at"),
     ]);
     setRsvps(r ?? []);
     setProposals(p ?? []);
     setTasks(t ?? []);
+    setExpenses(ex ?? []);
 
     if (p && p.length) {
       const { data: v } = await supabase.from("time_votes").select("*").in("proposal_id", p.map((x) => x.id));
       setVotes(v ?? []);
     } else {
       setVotes([]);
+    }
+
+    if (ex && ex.length) {
+      const { data: sh } = await supabase.from("expense_shares").select("*").in("expense_id", ex.map((x) => x.id));
+      setShares(sh ?? []);
+    } else {
+      setShares([]);
     }
   };
 
@@ -181,9 +209,65 @@ function EventsPage() {
     loadEventDetails(activeId!);
   };
 
+  const addExpense = async () => {
+    if (!newExpense.title || !newExpense.amount || !activeId || !user) {
+      toast.error("Expense needs a title and amount");
+      return;
+    }
+    const amount = parseFloat(newExpense.amount);
+    if (isNaN(amount) || amount < 0) { toast.error("Enter a valid amount"); return; }
+
+    const { data: exp, error } = await supabase
+      .from("expenses")
+      .insert({
+        event_id: activeId,
+        paid_by: user.id,
+        title: newExpense.title,
+        amount,
+        notes: newExpense.notes || null,
+      })
+      .select()
+      .single();
+    if (error || !exp) { toast.error(error?.message ?? "Failed"); return; }
+
+    // Default: split equally among everyone who RSVP'd "going" (or just the payer if no one yet)
+    const goingUsers = rsvps.filter((r) => r.status === "going").map((r) => r.user_id);
+    const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
+    const perPerson = Math.round((amount / splitAmong.length) * 100) / 100;
+
+    const sharesToInsert = splitAmong.map((uid) => ({
+      expense_id: exp.id,
+      user_id: uid,
+      share_amount: perPerson,
+    }));
+    await supabase.from("expense_shares").insert(sharesToInsert);
+
+    toast.success("Expense added!");
+    setNewExpense({ title: "", amount: "", notes: "" });
+    loadEventDetails(activeId);
+  };
+
+  const deleteExpense = async (id: string) => {
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Expense removed");
+    loadEventDetails(activeId!);
+  };
+
+  const updateShare = async (shareId: string, amount: number) => {
+    if (isNaN(amount) || amount < 0) return;
+    await supabase.from("expense_shares").update({ share_amount: amount }).eq("id", shareId);
+    loadEventDetails(activeId!);
+  };
+
   const myRsvp = rsvps.find((r) => r.user_id === user?.id)?.status;
   const completedCount = tasks.filter((t) => t.completed).length;
   const progress = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
+
+  const totalBudget = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const myShare = shares
+    .filter((s) => s.user_id === user?.id)
+    .reduce((sum, s) => sum + Number(s.share_amount), 0);
 
   const priorityIcon = { high: "🔴", med: "🟡", low: "🟢" };
 
@@ -342,7 +426,91 @@ function EventsPage() {
                     <button onClick={addProposal} className="bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg">Propose</button>
                   </div>
                 </section>
+
+                <section className="bg-card border border-border rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-brand-yellow" />
+                      Budget & Cost Splitting
+                    </h2>
+                    <div className="text-right text-sm">
+                      <div className="text-muted-foreground">Total: <span className="text-brand-yellow font-bold">${totalBudget.toFixed(2)}</span></div>
+                      <div className="text-muted-foreground">You owe: <span className="text-brand-pink font-bold">${myShare.toFixed(2)}</span></div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">Split equally by default — tap a share to adjust.</p>
+
+                  <div className="space-y-3 mb-4">
+                    {expenses.length === 0 && <p className="text-sm text-muted-foreground italic">No expenses yet.</p>}
+                    {expenses.map((exp) => {
+                      const expShares = shares.filter((s) => s.expense_id === exp.id);
+                      const payer = profiles[exp.paid_by];
+                      return (
+                        <div key={exp.id} className="bg-input p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex-1">
+                              <div className="font-bold">{exp.title} <span className="text-brand-yellow">${Number(exp.amount).toFixed(2)}</span></div>
+                              <div className="text-xs text-muted-foreground">
+                                Paid by <span className="text-brand-pink">@{payer?.username ?? "user"}</span>
+                                {exp.notes && <> • {exp.notes}</>}
+                              </div>
+                            </div>
+                            {exp.paid_by === user?.id && (
+                              <button onClick={() => deleteExpense(exp.id)} className="text-muted-foreground hover:text-destructive">
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                          {expShares.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
+                              {expShares.map((s) => {
+                                const u = profiles[s.user_id];
+                                return (
+                                  <div key={s.id} className="flex items-center gap-1 text-xs">
+                                    <span className="text-muted-foreground truncate">@{u?.username ?? "user"}</span>
+                                    <span className="text-muted-foreground">$</span>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      defaultValue={Number(s.share_amount).toFixed(2)}
+                                      onBlur={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (val !== Number(s.share_amount)) updateShare(s.id, val);
+                                      }}
+                                      className="w-16 bg-card px-1 py-0.5 rounded border border-border text-brand-yellow font-bold focus:outline-none focus:border-brand-yellow"
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-[1fr_120px_auto] gap-2 pt-4 border-t border-border">
+                    <input
+                      placeholder="What was it for? (e.g. Pizza)"
+                      value={newExpense.title}
+                      onChange={(e) => setNewExpense({ ...newExpense, title: e.target.value })}
+                      className="bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Amount"
+                      value={newExpense.amount}
+                      onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                      className="bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                    />
+                    <button onClick={addExpense} className="bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg text-sm">Add</button>
+                  </div>
+                </section>
               </div>
+
 
               <div className="space-y-6">
                 <section className="bg-card border border-border rounded-xl p-6">

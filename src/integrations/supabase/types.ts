@@ -105,6 +105,71 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_shares: {
+        Row: {
+          created_at: string
+          expense_id: string
+          id: string
+          share_amount: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expense_id: string
+          id?: string
+          share_amount: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expense_id?: string
+          id?: string
+          share_amount?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_shares_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          event_id: string
+          id: string
+          notes: string | null
+          paid_by: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          paid_by: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          paid_by?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           addressee_id: string
