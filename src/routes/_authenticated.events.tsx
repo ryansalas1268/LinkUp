@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2 } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
@@ -52,6 +52,22 @@ interface ProfileRow {
   display_name: string;
 }
 
+interface ExpenseRow {
+  id: string;
+  event_id: string;
+  paid_by: string;
+  title: string;
+  amount: number;
+  notes: string | null;
+}
+
+interface ExpenseShareRow {
+  id: string;
+  expense_id: string;
+  user_id: string;
+  share_amount: number;
+}
+
 function EventsPage() {
   const { user, profile } = useAuth();
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -60,11 +76,14 @@ function EventsPage() {
   const [proposals, setProposals] = useState<ProposalRow[]>([]);
   const [votes, setVotes] = useState<VoteRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
+  const [shares, setShares] = useState<ExpenseShareRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileRow>>({});
   const [showNew, setShowNew] = useState(false);
   const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "" });
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
+  const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "" });
 
   const activeEvent = events.find((e) => e.id === activeId);
 
@@ -78,20 +97,29 @@ function EventsPage() {
   };
 
   const loadEventDetails = async (eventId: string) => {
-    const [{ data: r }, { data: p }, { data: t }] = await Promise.all([
+    const [{ data: r }, { data: p }, { data: t }, { data: ex }] = await Promise.all([
       supabase.from("rsvps").select("*").eq("event_id", eventId),
       supabase.from("time_proposals").select("*").eq("event_id", eventId).order("proposed_time"),
       supabase.from("tasks").select("*").eq("event_id", eventId).order("created_at"),
+      supabase.from("expenses").select("*").eq("event_id", eventId).order("created_at"),
     ]);
     setRsvps(r ?? []);
     setProposals(p ?? []);
     setTasks(t ?? []);
+    setExpenses(ex ?? []);
 
     if (p && p.length) {
       const { data: v } = await supabase.from("time_votes").select("*").in("proposal_id", p.map((x) => x.id));
       setVotes(v ?? []);
     } else {
       setVotes([]);
+    }
+
+    if (ex && ex.length) {
+      const { data: sh } = await supabase.from("expense_shares").select("*").in("expense_id", ex.map((x) => x.id));
+      setShares(sh ?? []);
+    } else {
+      setShares([]);
     }
   };
 
