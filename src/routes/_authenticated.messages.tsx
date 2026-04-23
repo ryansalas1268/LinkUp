@@ -308,9 +308,37 @@ function MessagesPage() {
             </div>
           ) : (
             <>
-              <div className="border-b border-border pb-3 mb-4">
-                <h2 className="text-xl font-bold">{active.title ?? "Chat"}</h2>
-                <p className="text-xs text-muted-foreground">{active.is_direct ? "Direct message" : "Group chat"}</p>
+              <div className="border-b border-border pb-3 mb-4 flex items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-xl font-bold">{active.title ?? "Chat"}</h2>
+                  <p className="text-xs text-muted-foreground">{active.is_direct ? "Direct message" : "Group chat"}</p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 rounded-lg hover:bg-input text-muted-foreground hover:text-foreground transition-colors" aria-label="Chat options">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {!active.is_direct && (
+                      <DropdownMenuItem onClick={() => setConfirm({ kind: "leave" })}>
+                        <LogOut className="w-4 h-4 mr-2" /> Leave chat
+                      </DropdownMenuItem>
+                    )}
+                    {active.is_direct && otherMember && (
+                      <DropdownMenuItem onClick={() => setConfirm({ kind: "block", targetId: otherMember.id, targetName: otherMember.display_name })}>
+                        <Ban className="w-4 h-4 mr-2" /> Block @{otherMember.username}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setConfirm({ kind: "delete" })}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" /> Delete chat
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[500px]">
