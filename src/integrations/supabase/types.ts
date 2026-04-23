@@ -413,10 +413,14 @@ export type Database = {
         Args: { _conv: string; _user: string }
         Returns: boolean
       }
+      is_event_host: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       friendship_status: "pending" | "accepted" | "declined"
-      rsvp_status: "going" | "maybe" | "no"
+      rsvp_status: "going" | "maybe" | "no" | "invited"
       task_priority: "high" | "med" | "low"
     }
     CompositeTypes: {
@@ -546,7 +550,7 @@ export const Constants = {
   public: {
     Enums: {
       friendship_status: ["pending", "accepted", "declined"],
-      rsvp_status: ["going", "maybe", "no"],
+      rsvp_status: ["going", "maybe", "no", "invited"],
       task_priority: ["high", "med", "low"],
     },
   },
