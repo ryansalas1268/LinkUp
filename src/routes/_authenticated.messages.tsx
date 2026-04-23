@@ -377,6 +377,36 @@ function MessagesPage() {
           )}
         </section>
       </div>
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.kind === "leave" && "Leave this chat?"}
+              {confirm?.kind === "delete" && "Delete this chat?"}
+              {confirm?.kind === "block" && `Block ${confirm.targetName}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.kind === "leave" && "You won't receive new messages. The chat will continue without you."}
+              {confirm?.kind === "delete" && "This permanently removes the chat and all its messages for everyone."}
+              {confirm?.kind === "block" && "You'll leave this chat and won't see messages from this user."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirm?.kind === "leave") leaveChat();
+                else if (confirm?.kind === "delete") deleteChat();
+                else if (confirm?.kind === "block") blockUser();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {confirm?.kind === "leave" ? "Leave" : confirm?.kind === "delete" ? "Delete" : "Block"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
