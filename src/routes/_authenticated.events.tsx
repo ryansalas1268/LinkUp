@@ -364,11 +364,24 @@ function EventsPage() {
                       )}
                       {activeEvent.description && <p className="mt-3 text-sm">{activeEvent.description}</p>}
                     </div>
-                    {activeEvent.host_id === user?.id && (
-                      <button onClick={() => deleteEvent(activeEvent.id)} className="text-muted-foreground hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={async () => {
+                          const { data, error } = await supabase.rpc("get_or_create_event_chat", { _event_id: activeEvent.id });
+                          if (error || !data) { toast.error(error?.message ?? "Couldn't open chat"); return; }
+                          navigate({ to: "/messages", search: { conversation: data as string } });
+                        }}
+                        className="bg-brand-gradient text-black font-bold px-3 py-1.5 rounded-lg text-sm flex items-center gap-1"
+                        title="Open group chat"
+                      >
+                        <MessageCircle className="w-4 h-4" /> Group Chat
                       </button>
-                    )}
+                      {activeEvent.host_id === user?.id && (
+                        <button onClick={() => deleteEvent(activeEvent.id)} className="text-muted-foreground hover:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-5">
