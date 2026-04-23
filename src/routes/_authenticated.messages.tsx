@@ -348,9 +348,7 @@ function MessagesPage() {
                   const senderName = profiles[m.sender_id]?.display_name ?? "User";
                   return (
                     <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
-                      <div className={`max-w-[75%] px-4 py-2.5 rounded-xl ${
-                        isMine ? "bg-brand-gradient text-black" : "bg-input border border-border"
-                      }`}>
+                      <div className={`max-w-[75%] px-4 py-2.5 rounded-xl ${isMine ? "bg-brand-gradient text-black" : "bg-input border border-border"}`}>
                         {m.body}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
