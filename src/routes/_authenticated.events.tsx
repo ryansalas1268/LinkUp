@@ -426,7 +426,91 @@ function EventsPage() {
                     <button onClick={addProposal} className="bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg">Propose</button>
                   </div>
                 </section>
+
+                <section className="bg-card border border-border rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-brand-yellow" />
+                      Budget & Cost Splitting
+                    </h2>
+                    <div className="text-right text-sm">
+                      <div className="text-muted-foreground">Total: <span className="text-brand-yellow font-bold">${totalBudget.toFixed(2)}</span></div>
+                      <div className="text-muted-foreground">You owe: <span className="text-brand-pink font-bold">${myShare.toFixed(2)}</span></div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">Split equally by default — tap a share to adjust.</p>
+
+                  <div className="space-y-3 mb-4">
+                    {expenses.length === 0 && <p className="text-sm text-muted-foreground italic">No expenses yet.</p>}
+                    {expenses.map((exp) => {
+                      const expShares = shares.filter((s) => s.expense_id === exp.id);
+                      const payer = profiles[exp.paid_by];
+                      return (
+                        <div key={exp.id} className="bg-input p-3 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex-1">
+                              <div className="font-bold">{exp.title} <span className="text-brand-yellow">${Number(exp.amount).toFixed(2)}</span></div>
+                              <div className="text-xs text-muted-foreground">
+                                Paid by <span className="text-brand-pink">@{payer?.username ?? "user"}</span>
+                                {exp.notes && <> • {exp.notes}</>}
+                              </div>
+                            </div>
+                            {exp.paid_by === user?.id && (
+                              <button onClick={() => deleteExpense(exp.id)} className="text-muted-foreground hover:text-destructive">
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                          {expShares.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
+                              {expShares.map((s) => {
+                                const u = profiles[s.user_id];
+                                return (
+                                  <div key={s.id} className="flex items-center gap-1 text-xs">
+                                    <span className="text-muted-foreground truncate">@{u?.username ?? "user"}</span>
+                                    <span className="text-muted-foreground">$</span>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      defaultValue={Number(s.share_amount).toFixed(2)}
+                                      onBlur={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (val !== Number(s.share_amount)) updateShare(s.id, val);
+                                      }}
+                                      className="w-16 bg-card px-1 py-0.5 rounded border border-border text-brand-yellow font-bold focus:outline-none focus:border-brand-yellow"
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-[1fr_120px_auto] gap-2 pt-4 border-t border-border">
+                    <input
+                      placeholder="What was it for? (e.g. Pizza)"
+                      value={newExpense.title}
+                      onChange={(e) => setNewExpense({ ...newExpense, title: e.target.value })}
+                      className="bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Amount"
+                      value={newExpense.amount}
+                      onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                      className="bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                    />
+                    <button onClick={addExpense} className="bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg text-sm">Add</button>
+                  </div>
+                </section>
               </div>
+
 
               <div className="space-y-6">
                 <section className="bg-card border border-border rounded-xl p-6">
