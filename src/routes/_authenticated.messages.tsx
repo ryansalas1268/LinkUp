@@ -259,6 +259,8 @@ function MessagesPage() {
     }
     setConfirm(null);
   };
+
+  return (
     <main className="max-w-7xl mx-auto px-6 py-8">
       <div className="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
         <aside className="bg-card border border-border rounded-xl p-5 min-h-[600px]">
