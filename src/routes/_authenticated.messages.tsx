@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { Send, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/messages")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    conversation: typeof s.conversation === "string" ? s.conversation : undefined,
+  }),
   component: MessagesPage,
 });
 
