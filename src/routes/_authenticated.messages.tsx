@@ -153,18 +153,20 @@ function MessagesPage() {
       }
     }
     const friendProfile = friends.find((f) => f.id === friendId);
-    const { data: conv, error } = await supabase
-      .from("conversations")
-      .insert({ is_direct: true, title: friendProfile?.display_name ?? "Chat" })
-      .select()
-      .single();
-    if (error || !conv) { toast.error(error?.message ?? "Failed"); return; }
-    await supabase.from("conversation_members").insert([
-      { conversation_id: conv.id, user_id: user.id },
-      { conversation_id: conv.id, user_id: friendId },
-    ]);
+    // Create conversation via SECURITY DEFINER RPC (auto-adds caller as member)
+    const { data: convId, error } = await supabase.rpc("create_conversation", {
+      _is_direct: true,
+      _title: friendProfile?.display_name ?? "Chat",
+      _event_id: undefined as any,
+    });
+    if (error || !convId) { toast.error(error?.message ?? "Failed to create chat"); return; }
+    // Add the friend as the second member
+    const { error: memErr } = await supabase
+      .from("conversation_members")
+      .insert({ conversation_id: convId as string, user_id: friendId });
+    if (memErr) { toast.error(memErr.message); return; }
     await loadConversations();
-    setActiveId(conv.id);
+    setActiveId(convId as string);
     setShowNew(false);
   };
 
