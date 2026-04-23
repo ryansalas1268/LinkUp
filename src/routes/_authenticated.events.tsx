@@ -170,6 +170,50 @@ function EventsPage() {
     loadEventDetails(activeId);
   };
 
+  // Search any user by username or display name (host can invite anyone)
+  const searchUsers = async (q: string) => {
+    setInviteQuery(q);
+    if (!q.trim()) { setInviteResults([]); return; }
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, username, display_name")
+      .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+      .limit(8);
+    const existingIds = new Set(rsvps.map((r) => r.user_id).concat(user?.id ?? ""));
+    setInviteResults((data ?? []).filter((p) => !existingIds.has(p.id)));
+  };
+
+  // Invite someone — adds them with status 'invited'
+  const invite = async (userId: string) => {
+    if (!activeId) return;
+    const { error } = await supabase
+      .from("rsvps")
+      .insert({ event_id: activeId, user_id: userId, status: "invited" });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Invited!");
+    setInviteQuery("");
+    setInviteResults([]);
+    loadEventDetails(activeId);
+  };
+
+  // Host override: change anyone's RSVP on this event (demo helper)
+  const overrideRSVP = async (userId: string, status: "going" | "maybe" | "no" | "invited") => {
+    if (!activeId) return;
+    const { error } = await supabase
+      .from("rsvps")
+      .upsert({ event_id: activeId, user_id: userId, status }, { onConflict: "event_id,user_id" });
+    if (error) { toast.error(error.message); return; }
+    loadEventDetails(activeId);
+  };
+
+  // Host can remove a guest entirely
+  const removeGuest = async (userId: string) => {
+    if (!activeId) return;
+    const { error } = await supabase.from("rsvps").delete().eq("event_id", activeId).eq("user_id", userId);
+    if (error) { toast.error(error.message); return; }
+    loadEventDetails(activeId);
+  };
+
   const addProposal = async () => {
     if (!newProposal || !activeId || !user) return;
     const { error } = await supabase.from("time_proposals").insert({
