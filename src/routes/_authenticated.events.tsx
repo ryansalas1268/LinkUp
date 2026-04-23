@@ -21,7 +21,7 @@ interface EventRow {
 interface RsvpRow {
   event_id: string;
   user_id: string;
-  status: "going" | "maybe" | "no";
+  status: "going" | "maybe" | "no" | "invited";
 }
 
 interface ProposalRow {
