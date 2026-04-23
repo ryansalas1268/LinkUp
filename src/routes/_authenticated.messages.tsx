@@ -208,7 +208,57 @@ function MessagesPage() {
     setShowNew(false);
   };
 
-  return (
+  // Determine the "other" user in a direct chat (for blocking)
+  const otherMember = active?.is_direct
+    ? members.find((m) => m.id !== user?.id)
+    : undefined;
+
+  const leaveChat = async () => {
+    if (!activeId || !user) return;
+    const { error } = await supabase
+      .from("conversation_members")
+      .delete()
+      .eq("conversation_id", activeId)
+      .eq("user_id", user.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Left conversation");
+    setActiveId(null);
+    setConfirm(null);
+    await loadConversations();
+  };
+
+  const deleteChat = async () => {
+    if (!activeId) return;
+    // Purge messages + members first (RLS allows it for deleters), then conversation
+    await supabase.from("messages").delete().eq("conversation_id", activeId);
+    await supabase.from("conversation_members").delete().eq("conversation_id", activeId);
+    const { error } = await supabase.from("conversations").delete().eq("id", activeId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Conversation deleted");
+    setActiveId(null);
+    setConfirm(null);
+    await loadConversations();
+  };
+
+  const blockUser = async () => {
+    if (!user || !confirm?.targetId) return;
+    const { error } = await supabase.from("blocked_users").insert({
+      blocker_id: user.id,
+      blocked_id: confirm.targetId,
+    });
+    if (error && !error.message.includes("duplicate")) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Blocked ${confirm.targetName ?? "user"}`);
+    // Also leave the chat
+    if (activeId) {
+      await supabase.from("conversation_members").delete().eq("conversation_id", activeId).eq("user_id", user.id);
+      setActiveId(null);
+      await loadConversations();
+    }
+    setConfirm(null);
+  };
     <main className="max-w-7xl mx-auto px-6 py-8">
       <div className="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
         <aside className="bg-card border border-border rounded-xl p-5 min-h-[600px]">
