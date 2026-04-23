@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { Send, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/messages")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    conversation: typeof s.conversation === "string" ? s.conversation : undefined,
+  }),
   component: MessagesPage,
 });
 
@@ -32,6 +35,7 @@ interface Profile {
 
 function MessagesPage() {
   const { user } = useAuth();
+  const { conversation: conversationParam } = Route.useSearch();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -92,6 +96,7 @@ function MessagesPage() {
   };
 
   useEffect(() => { loadConversations(); loadFriends(); }, [user]);
+  useEffect(() => { if (conversationParam) setActiveId(conversationParam); }, [conversationParam]);
   useEffect(() => { if (activeId) loadMessages(activeId); }, [activeId]);
 
   // Realtime
@@ -153,18 +158,20 @@ function MessagesPage() {
       }
     }
     const friendProfile = friends.find((f) => f.id === friendId);
-    const { data: conv, error } = await supabase
-      .from("conversations")
-      .insert({ is_direct: true, title: friendProfile?.display_name ?? "Chat" })
-      .select()
-      .single();
-    if (error || !conv) { toast.error(error?.message ?? "Failed"); return; }
-    await supabase.from("conversation_members").insert([
-      { conversation_id: conv.id, user_id: user.id },
-      { conversation_id: conv.id, user_id: friendId },
-    ]);
+    // Create conversation via SECURITY DEFINER RPC (auto-adds caller as member)
+    const { data: convId, error } = await supabase.rpc("create_conversation", {
+      _is_direct: true,
+      _title: friendProfile?.display_name ?? "Chat",
+      _event_id: undefined as any,
+    });
+    if (error || !convId) { toast.error(error?.message ?? "Failed to create chat"); return; }
+    // Add the friend as the second member
+    const { error: memErr } = await supabase
+      .from("conversation_members")
+      .insert({ conversation_id: convId as string, user_id: friendId });
+    if (memErr) { toast.error(memErr.message); return; }
     await loadConversations();
-    setActiveId(conv.id);
+    setActiveId(convId as string);
     setShowNew(false);
   };
 
