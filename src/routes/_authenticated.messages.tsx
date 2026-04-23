@@ -96,6 +96,7 @@ function MessagesPage() {
   };
 
   useEffect(() => { loadConversations(); loadFriends(); }, [user]);
+  useEffect(() => { if (conversationParam) setActiveId(conversationParam); }, [conversationParam]);
   useEffect(() => { if (activeId) loadMessages(activeId); }, [activeId]);
 
   // Realtime
