@@ -209,9 +209,65 @@ function EventsPage() {
     loadEventDetails(activeId!);
   };
 
+  const addExpense = async () => {
+    if (!newExpense.title || !newExpense.amount || !activeId || !user) {
+      toast.error("Expense needs a title and amount");
+      return;
+    }
+    const amount = parseFloat(newExpense.amount);
+    if (isNaN(amount) || amount < 0) { toast.error("Enter a valid amount"); return; }
+
+    const { data: exp, error } = await supabase
+      .from("expenses")
+      .insert({
+        event_id: activeId,
+        paid_by: user.id,
+        title: newExpense.title,
+        amount,
+        notes: newExpense.notes || null,
+      })
+      .select()
+      .single();
+    if (error || !exp) { toast.error(error?.message ?? "Failed"); return; }
+
+    // Default: split equally among everyone who RSVP'd "going" (or just the payer if no one yet)
+    const goingUsers = rsvps.filter((r) => r.status === "going").map((r) => r.user_id);
+    const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
+    const perPerson = Math.round((amount / splitAmong.length) * 100) / 100;
+
+    const sharesToInsert = splitAmong.map((uid) => ({
+      expense_id: exp.id,
+      user_id: uid,
+      share_amount: perPerson,
+    }));
+    await supabase.from("expense_shares").insert(sharesToInsert);
+
+    toast.success("Expense added!");
+    setNewExpense({ title: "", amount: "", notes: "" });
+    loadEventDetails(activeId);
+  };
+
+  const deleteExpense = async (id: string) => {
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Expense removed");
+    loadEventDetails(activeId!);
+  };
+
+  const updateShare = async (shareId: string, amount: number) => {
+    if (isNaN(amount) || amount < 0) return;
+    await supabase.from("expense_shares").update({ share_amount: amount }).eq("id", shareId);
+    loadEventDetails(activeId!);
+  };
+
   const myRsvp = rsvps.find((r) => r.user_id === user?.id)?.status;
   const completedCount = tasks.filter((t) => t.completed).length;
   const progress = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
+
+  const totalBudget = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const myShare = shares
+    .filter((s) => s.user_id === user?.id)
+    .reduce((sum, s) => sum + Number(s.share_amount), 0);
 
   const priorityIcon = { high: "🔴", med: "🟡", low: "🟢" };
 
