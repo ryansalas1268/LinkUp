@@ -27,7 +27,7 @@ export function Navbar() {
             <Link to="/events" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>My Events</Link>
             <Link to="/calendar" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>My Calendar</Link>
             <Link to="/friends" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Friends</Link>
-            <Link to="/messages" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Messages</Link>
+            <Link to="/messages" search={{ conversation: undefined }} className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Messages</Link>
             <span className="hidden md:inline text-sm text-brand-yellow font-bold">@{profile?.username ?? "..."}</span>
             <Button
               onClick={handleLogout}
