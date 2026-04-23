@@ -3,7 +3,24 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Send, Plus } from "lucide-react";
+import { Send, Plus, MoreVertical, LogOut, Trash2, Ban } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/messages")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -43,6 +60,8 @@ function MessagesPage() {
   const [text, setText] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [friends, setFriends] = useState<Profile[]>([]);
+  const [members, setMembers] = useState<Profile[]>([]);
+  const [confirm, setConfirm] = useState<null | { kind: "leave" | "delete" | "block"; targetId?: string; targetName?: string }>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const active = conversations.find((c) => c.id === activeId);
@@ -95,9 +114,23 @@ function MessagesPage() {
     }
   };
 
+  const loadMembers = async (convId: string) => {
+    const { data: mems } = await supabase
+      .from("conversation_members")
+      .select("user_id")
+      .eq("conversation_id", convId);
+    const ids = (mems ?? []).map((m) => m.user_id);
+    if (ids.length) {
+      const { data: ps } = await supabase.from("profiles").select("id, username, display_name").in("id", ids);
+      setMembers(ps ?? []);
+    } else {
+      setMembers([]);
+    }
+  };
+
   useEffect(() => { loadConversations(); loadFriends(); }, [user]);
   useEffect(() => { if (conversationParam) setActiveId(conversationParam); }, [conversationParam]);
-  useEffect(() => { if (activeId) loadMessages(activeId); }, [activeId]);
+  useEffect(() => { if (activeId) { loadMessages(activeId); loadMembers(activeId); } }, [activeId]);
 
   // Realtime
   useEffect(() => {
@@ -175,6 +208,58 @@ function MessagesPage() {
     setShowNew(false);
   };
 
+  // Determine the "other" user in a direct chat (for blocking)
+  const otherMember = active?.is_direct
+    ? members.find((m) => m.id !== user?.id)
+    : undefined;
+
+  const leaveChat = async () => {
+    if (!activeId || !user) return;
+    const { error } = await supabase
+      .from("conversation_members")
+      .delete()
+      .eq("conversation_id", activeId)
+      .eq("user_id", user.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Left conversation");
+    setActiveId(null);
+    setConfirm(null);
+    await loadConversations();
+  };
+
+  const deleteChat = async () => {
+    if (!activeId) return;
+    // Purge messages + members first (RLS allows it for deleters), then conversation
+    await supabase.from("messages").delete().eq("conversation_id", activeId);
+    await supabase.from("conversation_members").delete().eq("conversation_id", activeId);
+    const { error } = await supabase.from("conversations").delete().eq("id", activeId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Conversation deleted");
+    setActiveId(null);
+    setConfirm(null);
+    await loadConversations();
+  };
+
+  const blockUser = async () => {
+    if (!user || !confirm?.targetId) return;
+    const { error } = await supabase.from("blocked_users").insert({
+      blocker_id: user.id,
+      blocked_id: confirm.targetId,
+    });
+    if (error && !error.message.includes("duplicate")) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Blocked ${confirm.targetName ?? "user"}`);
+    // Also leave the chat
+    if (activeId) {
+      await supabase.from("conversation_members").delete().eq("conversation_id", activeId).eq("user_id", user.id);
+      setActiveId(null);
+      await loadConversations();
+    }
+    setConfirm(null);
+  };
+
   return (
     <main className="max-w-7xl mx-auto px-6 py-8">
       <div className="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
@@ -223,9 +308,37 @@ function MessagesPage() {
             </div>
           ) : (
             <>
-              <div className="border-b border-border pb-3 mb-4">
-                <h2 className="text-xl font-bold">{active.title ?? "Chat"}</h2>
-                <p className="text-xs text-muted-foreground">{active.is_direct ? "Direct message" : "Group chat"}</p>
+              <div className="border-b border-border pb-3 mb-4 flex items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-xl font-bold">{active.title ?? "Chat"}</h2>
+                  <p className="text-xs text-muted-foreground">{active.is_direct ? "Direct message" : "Group chat"}</p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 rounded-lg hover:bg-input text-muted-foreground hover:text-foreground transition-colors" aria-label="Chat options">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {!active.is_direct && (
+                      <DropdownMenuItem onClick={() => setConfirm({ kind: "leave" })}>
+                        <LogOut className="w-4 h-4 mr-2" /> Leave chat
+                      </DropdownMenuItem>
+                    )}
+                    {active.is_direct && otherMember && (
+                      <DropdownMenuItem onClick={() => setConfirm({ kind: "block", targetId: otherMember.id, targetName: otherMember.display_name })}>
+                        <Ban className="w-4 h-4 mr-2" /> Block @{otherMember.username}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setConfirm({ kind: "delete" })}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" /> Delete chat
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[500px]">
@@ -264,6 +377,36 @@ function MessagesPage() {
           )}
         </section>
       </div>
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.kind === "leave" && "Leave this chat?"}
+              {confirm?.kind === "delete" && "Delete this chat?"}
+              {confirm?.kind === "block" && `Block ${confirm.targetName}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.kind === "leave" && "You won't receive new messages. The chat will continue without you."}
+              {confirm?.kind === "delete" && "This permanently removes the chat and all its messages for everyone."}
+              {confirm?.kind === "block" && "You'll leave this chat and won't see messages from this user."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirm?.kind === "leave") leaveChat();
+                else if (confirm?.kind === "delete") deleteChat();
+                else if (confirm?.kind === "block") blockUser();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {confirm?.kind === "leave" ? "Leave" : confirm?.kind === "delete" ? "Delete" : "Block"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
