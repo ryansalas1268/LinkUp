@@ -60,6 +60,8 @@ function MessagesPage() {
   const [text, setText] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [friends, setFriends] = useState<Profile[]>([]);
+  const [members, setMembers] = useState<Profile[]>([]);
+  const [confirm, setConfirm] = useState<null | { kind: "leave" | "delete" | "block"; targetId?: string; targetName?: string }>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const active = conversations.find((c) => c.id === activeId);
