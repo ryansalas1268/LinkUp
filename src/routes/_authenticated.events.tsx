@@ -70,6 +70,7 @@ interface ExpenseShareRow {
 
 function EventsPage() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rsvps, setRsvps] = useState<RsvpRow[]>([]);
