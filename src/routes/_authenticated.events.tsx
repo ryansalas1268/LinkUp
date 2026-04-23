@@ -21,7 +21,7 @@ interface EventRow {
 interface RsvpRow {
   event_id: string;
   user_id: string;
-  status: "going" | "maybe" | "no";
+  status: "going" | "maybe" | "no" | "invited";
 }
 
 interface ProposalRow {
@@ -85,6 +85,8 @@ function EventsPage() {
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "" });
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
 
   const activeEvent = events.find((e) => e.id === activeId);
 
@@ -165,6 +167,50 @@ function EventsPage() {
       .upsert({ event_id: activeId, user_id: user.id, status }, { onConflict: "event_id,user_id" });
     if (error) { toast.error(error.message); return; }
     toast.success(`RSVP set to ${status}`);
+    loadEventDetails(activeId);
+  };
+
+  // Search any user by username or display name (host can invite anyone)
+  const searchUsers = async (q: string) => {
+    setInviteQuery(q);
+    if (!q.trim()) { setInviteResults([]); return; }
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, username, display_name")
+      .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+      .limit(8);
+    const existingIds = new Set(rsvps.map((r) => r.user_id).concat(user?.id ?? ""));
+    setInviteResults((data ?? []).filter((p) => !existingIds.has(p.id)));
+  };
+
+  // Invite someone — adds them with status 'invited'
+  const invite = async (userId: string) => {
+    if (!activeId) return;
+    const { error } = await supabase
+      .from("rsvps")
+      .insert({ event_id: activeId, user_id: userId, status: "invited" });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Invited!");
+    setInviteQuery("");
+    setInviteResults([]);
+    loadEventDetails(activeId);
+  };
+
+  // Host override: change anyone's RSVP on this event (demo helper)
+  const overrideRSVP = async (userId: string, status: "going" | "maybe" | "no" | "invited") => {
+    if (!activeId) return;
+    const { error } = await supabase
+      .from("rsvps")
+      .upsert({ event_id: activeId, user_id: userId, status }, { onConflict: "event_id,user_id" });
+    if (error) { toast.error(error.message); return; }
+    loadEventDetails(activeId);
+  };
+
+  // Host can remove a guest entirely
+  const removeGuest = async (userId: string) => {
+    if (!activeId) return;
+    const { error } = await supabase.from("rsvps").delete().eq("event_id", activeId).eq("user_id", userId);
+    if (error) { toast.error(error.message); return; }
     loadEventDetails(activeId);
   };
 
@@ -566,21 +612,68 @@ function EventsPage() {
                 </section>
 
                 <section className="bg-card border border-border rounded-xl p-6">
+                  <h2 className="text-xl font-bold mb-3">Invite People ➕</h2>
+                  <p className="text-xs text-muted-foreground mb-3">Search any user by username or name.</p>
+                  <input
+                    placeholder="Search users…"
+                    value={inviteQuery}
+                    onChange={(e) => searchUsers(e.target.value)}
+                    className="w-full bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm mb-2"
+                  />
+                  {inviteResults.length > 0 && (
+                    <ul className="space-y-1 mb-2">
+                      {inviteResults.map((p) => (
+                        <li key={p.id} className="flex items-center gap-2 bg-input p-2 rounded text-sm">
+                          <span className="text-brand-yellow font-bold flex-1">@{p.username}</span>
+                          <span className="text-muted-foreground text-xs">"{p.display_name}"</span>
+                          <button onClick={() => invite(p.id)} className="bg-brand-gradient text-black font-bold text-xs px-3 py-1 rounded">
+                            Invite
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {inviteQuery && inviteResults.length === 0 && (
+                    <p className="text-xs italic text-muted-foreground">No matches.</p>
+                  )}
+                </section>
+
+                <section className="bg-card border border-border rounded-xl p-6">
                   <h2 className="text-xl font-bold mb-3">Guestlist 👥</h2>
+                  {activeEvent.host_id === user?.id && (
+                    <p className="text-xs text-muted-foreground italic mb-3">As the host you can change anyone's RSVP.</p>
+                  )}
                   <ul className="space-y-2">
-                    {rsvps.length === 0 && <li className="text-sm text-muted-foreground italic">No RSVPs yet.</li>}
+                    {rsvps.length === 0 && <li className="text-sm text-muted-foreground italic">No RSVPs yet — invite someone above!</li>}
                     {rsvps.map((r) => {
                       const p = profiles[r.user_id];
+                      const isHost = activeEvent.host_id === user?.id;
+                      const dotColor =
+                        r.status === "going" ? "bg-going" :
+                        r.status === "maybe" ? "bg-maybe" :
+                        r.status === "no" ? "bg-no" : "bg-muted-foreground";
+                      const label =
+                        r.status === "no" ? "Can't go" :
+                        r.status === "invited" ? "Invited" :
+                        r.status.charAt(0).toUpperCase() + r.status.slice(1);
                       return (
-                        <li key={r.user_id} className="flex items-center gap-2 text-sm">
-                          <span className={`inline-block w-3 h-3 rounded-full ${
-                            r.status === "going" ? "bg-going" : r.status === "maybe" ? "bg-maybe" : "bg-no"
-                          }`} />
-                          <span className="text-brand-yellow font-bold">@{p?.username ?? "user"}</span>
-                          <span className="text-muted-foreground">"{p?.display_name ?? "?"}"</span>
-                          <span className="text-xs text-muted-foreground ml-auto">
-                            ({r.status === "no" ? "Can't go" : r.status})
-                          </span>
+                        <li key={r.user_id} className="bg-input rounded-lg p-2.5">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className={`inline-block w-3 h-3 rounded-full ${dotColor}`} />
+                            <span className="text-brand-yellow font-bold">@{p?.username ?? "user"}</span>
+                            <span className="text-muted-foreground truncate">"{p?.display_name ?? "?"}"</span>
+                            <span className="text-xs text-muted-foreground ml-auto">({label})</span>
+                          </div>
+                          {isHost && (
+                            <div className="flex gap-1 mt-2">
+                              <button onClick={() => overrideRSVP(r.user_id, "going")} className={`flex-1 text-xs py-1 rounded font-bold ${r.status === "going" ? "bg-going text-black" : "bg-card border border-border text-muted-foreground hover:text-going"}`}>Going</button>
+                              <button onClick={() => overrideRSVP(r.user_id, "maybe")} className={`flex-1 text-xs py-1 rounded font-bold ${r.status === "maybe" ? "bg-maybe text-black" : "bg-card border border-border text-muted-foreground hover:text-maybe"}`}>Maybe</button>
+                              <button onClick={() => overrideRSVP(r.user_id, "no")} className={`flex-1 text-xs py-1 rounded font-bold ${r.status === "no" ? "bg-no text-black" : "bg-card border border-border text-muted-foreground hover:text-no"}`}>Can't</button>
+                              <button onClick={() => removeGuest(r.user_id)} title="Remove from event" className="text-muted-foreground hover:text-destructive px-1">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </li>
                       );
                     })}
