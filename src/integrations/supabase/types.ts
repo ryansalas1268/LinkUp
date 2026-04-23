@@ -404,6 +404,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_conversation: {
+        Args: { _event_id?: string; _is_direct: boolean; _title: string }
+        Returns: string
+      }
+      get_or_create_event_chat: { Args: { _event_id: string }; Returns: string }
       is_conversation_member: {
         Args: { _conv: string; _user: string }
         Returns: boolean
