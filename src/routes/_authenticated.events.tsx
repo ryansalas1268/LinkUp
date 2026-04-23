@@ -85,6 +85,8 @@ function EventsPage() {
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
   const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "" });
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
 
   const activeEvent = events.find((e) => e.id === activeId);
 
