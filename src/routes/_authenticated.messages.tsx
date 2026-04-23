@@ -35,6 +35,7 @@ interface Profile {
 
 function MessagesPage() {
   const { user } = useAuth();
+  const { conversation: conversationParam } = Route.useSearch();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
