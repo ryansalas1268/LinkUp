@@ -114,9 +114,23 @@ function MessagesPage() {
     }
   };
 
+  const loadMembers = async (convId: string) => {
+    const { data: mems } = await supabase
+      .from("conversation_members")
+      .select("user_id")
+      .eq("conversation_id", convId);
+    const ids = (mems ?? []).map((m) => m.user_id);
+    if (ids.length) {
+      const { data: ps } = await supabase.from("profiles").select("id, username, display_name").in("id", ids);
+      setMembers(ps ?? []);
+    } else {
+      setMembers([]);
+    }
+  };
+
   useEffect(() => { loadConversations(); loadFriends(); }, [user]);
   useEffect(() => { if (conversationParam) setActiveId(conversationParam); }, [conversationParam]);
-  useEffect(() => { if (activeId) loadMessages(activeId); }, [activeId]);
+  useEffect(() => { if (activeId) { loadMessages(activeId); loadMembers(activeId); } }, [activeId]);
 
   // Realtime
   useEffect(() => {
