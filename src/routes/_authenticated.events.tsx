@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2, DollarSign, X } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
