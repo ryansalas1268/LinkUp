@@ -15,10 +15,10 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-6 py-20">
+      <main className="max-w-6xl mx-auto px-6 pt-10 pb-20 md:pt-14">
         <section className="text-center space-y-6">
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-            Plan events with{" "}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
+            Plan hangouts with{" "}
             <span className="bg-brand-gradient bg-clip-text text-transparent">
               your crew
             </span>
