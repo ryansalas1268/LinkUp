@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Star, LogOut } from "lucide-react";
-import logo from "@/assets/linkup-logo.png";
+import logo from "@/assets/linkup-logo-transparent.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
@@ -19,7 +19,7 @@ export function Navbar() {
   return (
     <nav className="bg-card border-b-2 border-brand-pink px-6 md:px-10 py-4 flex justify-between items-center sticky top-0 z-40">
       <Link to="/" className="flex items-center">
-        <img src={logo} alt="LinkUp" className="h-12 w-auto" />
+        <img src={logo} alt="LinkUp" className="h-20 md:h-24 w-auto" />
       </Link>
       <div className="flex items-center gap-4 md:gap-7 flex-wrap justify-end">
         {user ? (
