@@ -82,7 +82,7 @@
 }
 
 @layer utilities {
-  .bg-brand-gradient { background: var(--brand-gradient); }
+  .bg-brand-gradient { background-image: var(--brand-gradient); background-color: transparent; }
   .text-brand-pink { color: var(--brand-pink); }
   .text-brand-yellow { color: var(--brand-yellow); }
   .border-brand-pink { border-color: var(--brand-pink); }
