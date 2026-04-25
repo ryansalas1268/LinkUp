@@ -44,6 +44,7 @@ interface TaskRow {
   priority: "high" | "med" | "low";
   completed: boolean;
   created_by: string;
+  assigned_to: string | null;
 }
 
 interface ProfileRow {
@@ -743,6 +744,15 @@ function EventsPage() {
                         r.status === "no" ? "Can't go" :
                         r.status === "invited" ? "Invited" :
                         r.status.charAt(0).toUpperCase() + r.status.slice(1);
+                      const paid = expenses
+                        .filter((e) => e.paid_by === r.user_id)
+                        .reduce((sum, e) => sum + Number(e.amount), 0);
+                      const owes = shares
+                        .filter((s) => s.user_id === r.user_id)
+                        .reduce((sum, s) => sum + Number(s.share_amount), 0);
+                      const net = paid - owes;
+                      const userTasks = tasks.filter((t) => t.assigned_to === r.user_id);
+                      const hasMoney = paid > 0 || owes > 0;
                       return (
                         <li key={r.user_id} className="bg-input rounded-lg p-2.5">
                           <div className="flex items-center gap-2 text-sm">
@@ -751,6 +761,54 @@ function EventsPage() {
                             <span className="text-muted-foreground truncate">"{p?.display_name ?? "?"}"</span>
                             <span className="text-xs text-muted-foreground ml-auto">({label})</span>
                           </div>
+
+                          {(hasMoney || userTasks.length > 0) && (
+                            <div className="mt-2 pt-2 border-t border-border space-y-1 text-xs">
+                              {hasMoney && (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-muted-foreground">💰</span>
+                                  {paid > 0 && (
+                                    <span className="text-muted-foreground">
+                                      Paid <span className="text-brand-yellow font-bold">${paid.toFixed(2)}</span>
+                                    </span>
+                                  )}
+                                  {owes > 0 && (
+                                    <span className="text-muted-foreground">
+                                      • Owes <span className="text-brand-pink font-bold">${owes.toFixed(2)}</span>
+                                    </span>
+                                  )}
+                                  <span
+                                    className={`ml-auto px-2 py-0.5 rounded-full font-bold ${
+                                      Math.abs(net) < 0.01
+                                        ? "bg-card text-muted-foreground"
+                                        : net > 0
+                                        ? "bg-going/20 text-going"
+                                        : "bg-no/20 text-no"
+                                    }`}
+                                  >
+                                    {Math.abs(net) < 0.01
+                                      ? "Settled"
+                                      : net > 0
+                                      ? `+$${net.toFixed(2)}`
+                                      : `-$${Math.abs(net).toFixed(2)}`}
+                                  </span>
+                                </div>
+                              )}
+                              {userTasks.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                  <span className="text-muted-foreground">📋</span>
+                                  <span className="text-muted-foreground flex-1">
+                                    {userTasks.map((t) => (
+                                      <span key={t.id} className={`inline-block mr-2 ${t.completed ? "line-through opacity-60" : ""}`}>
+                                        {priorityIcon[t.priority]} {t.task_name}
+                                      </span>
+                                    ))}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {isHost && (
                             <div className="flex gap-1 mt-2">
                               <button onClick={() => overrideRSVP(r.user_id, "going")} className={`flex-1 text-xs py-1 rounded font-bold ${r.status === "going" ? "bg-going text-black" : "bg-card border border-border text-muted-foreground hover:text-going"}`}>Going</button>
