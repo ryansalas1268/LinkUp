@@ -272,11 +272,23 @@ function EventsPage() {
     const amount = parseFloat(newExpense.amount);
     if (isNaN(amount) || amount < 0) { toast.error("Enter a valid amount"); return; }
 
+    const payer = newExpense.paidBy || user.id;
+    const goingUsers = rsvps.filter((r) => r.status === "going").map((r) => r.user_id);
+    // Participants: explicit selection, else everyone going, else just payer
+    const participants = newExpense.participants.length > 0
+      ? newExpense.participants
+      : (goingUsers.length > 0 ? goingUsers : [payer]);
+
+    if (newExpense.splitMode !== "payer" && participants.length === 0) {
+      toast.error("Pick at least one person to split with");
+      return;
+    }
+
     const { data: exp, error } = await supabase
       .from("expenses")
       .insert({
         event_id: activeId,
-        paid_by: user.id,
+        paid_by: payer,
         title: newExpense.title,
         amount,
         notes: newExpense.notes || null,
@@ -285,27 +297,20 @@ function EventsPage() {
       .single();
     if (error || !exp) { toast.error(error?.message ?? "Failed"); return; }
 
-    const goingUsers = rsvps.filter((r) => r.status === "going").map((r) => r.user_id);
     let sharesToInsert: { expense_id: string; user_id: string; share_amount: number }[] = [];
-
     if (newExpense.splitMode === "payer") {
-      // Payer covers it themselves — no one owes anything
-      sharesToInsert = [{ expense_id: exp.id, user_id: user.id, share_amount: amount }];
+      sharesToInsert = [{ expense_id: exp.id, user_id: payer, share_amount: amount }];
     } else if (newExpense.splitMode === "custom") {
-      // Seed everyone going at $0 so the host can edit each share inline
-      const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
-      sharesToInsert = splitAmong.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: 0 }));
+      sharesToInsert = participants.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: 0 }));
     } else {
-      // Equal split among everyone going (or just payer if empty)
-      const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
-      const perPerson = Math.round((amount / splitAmong.length) * 100) / 100;
-      sharesToInsert = splitAmong.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: perPerson }));
+      const perPerson = Math.round((amount / participants.length) * 100) / 100;
+      sharesToInsert = participants.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: perPerson }));
     }
 
     await supabase.from("expense_shares").insert(sharesToInsert);
 
     toast.success("Expense added!");
-    setNewExpense({ title: "", amount: "", notes: "", splitMode: "equal" });
+    setNewExpense({ title: "", amount: "", notes: "", splitMode: "equal", paidBy: "", participants: [] });
     loadEventDetails(activeId);
   };
 
