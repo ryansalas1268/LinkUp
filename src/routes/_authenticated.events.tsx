@@ -84,7 +84,7 @@ function EventsPage() {
   const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "" });
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
-  const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "" });
+  const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "", splitMode: "equal" as "equal" | "payer" | "custom" });
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
 
