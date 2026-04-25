@@ -44,6 +44,7 @@ interface TaskRow {
   priority: "high" | "med" | "low";
   completed: boolean;
   created_by: string;
+  assigned_to: string | null;
 }
 
 interface ProfileRow {
