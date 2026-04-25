@@ -85,7 +85,14 @@ function EventsPage() {
   const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "" });
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
-  const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "", splitMode: "equal" as "equal" | "payer" | "custom" });
+  const [newExpense, setNewExpense] = useState({
+    title: "",
+    amount: "",
+    notes: "",
+    splitMode: "equal" as "equal" | "payer" | "custom",
+    paidBy: "" as string,
+    participants: [] as string[],
+  });
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
 
@@ -265,11 +272,23 @@ function EventsPage() {
     const amount = parseFloat(newExpense.amount);
     if (isNaN(amount) || amount < 0) { toast.error("Enter a valid amount"); return; }
 
+    const payer = newExpense.paidBy || user.id;
+    const goingUsers = rsvps.filter((r) => r.status === "going").map((r) => r.user_id);
+    // Participants: explicit selection, else everyone going, else just payer
+    const participants = newExpense.participants.length > 0
+      ? newExpense.participants
+      : (goingUsers.length > 0 ? goingUsers : [payer]);
+
+    if (newExpense.splitMode !== "payer" && participants.length === 0) {
+      toast.error("Pick at least one person to split with");
+      return;
+    }
+
     const { data: exp, error } = await supabase
       .from("expenses")
       .insert({
         event_id: activeId,
-        paid_by: user.id,
+        paid_by: payer,
         title: newExpense.title,
         amount,
         notes: newExpense.notes || null,
@@ -278,27 +297,20 @@ function EventsPage() {
       .single();
     if (error || !exp) { toast.error(error?.message ?? "Failed"); return; }
 
-    const goingUsers = rsvps.filter((r) => r.status === "going").map((r) => r.user_id);
     let sharesToInsert: { expense_id: string; user_id: string; share_amount: number }[] = [];
-
     if (newExpense.splitMode === "payer") {
-      // Payer covers it themselves — no one owes anything
-      sharesToInsert = [{ expense_id: exp.id, user_id: user.id, share_amount: amount }];
+      sharesToInsert = [{ expense_id: exp.id, user_id: payer, share_amount: amount }];
     } else if (newExpense.splitMode === "custom") {
-      // Seed everyone going at $0 so the host can edit each share inline
-      const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
-      sharesToInsert = splitAmong.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: 0 }));
+      sharesToInsert = participants.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: 0 }));
     } else {
-      // Equal split among everyone going (or just payer if empty)
-      const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
-      const perPerson = Math.round((amount / splitAmong.length) * 100) / 100;
-      sharesToInsert = splitAmong.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: perPerson }));
+      const perPerson = Math.round((amount / participants.length) * 100) / 100;
+      sharesToInsert = participants.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: perPerson }));
     }
 
     await supabase.from("expense_shares").insert(sharesToInsert);
 
     toast.success("Expense added!");
-    setNewExpense({ title: "", amount: "", notes: "", splitMode: "equal" });
+    setNewExpense({ title: "", amount: "", notes: "", splitMode: "equal", paidBy: "", participants: [] });
     loadEventDetails(activeId);
   };
 
@@ -631,12 +643,99 @@ function EventsPage() {
                       onChange={(e) => setNewExpense({ ...newExpense, notes: e.target.value })}
                       className="w-full bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
                     />
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground shrink-0">Paid by:</span>
+                      <select
+                        value={newExpense.paidBy || user?.id || ""}
+                        onChange={(e) => setNewExpense({ ...newExpense, paidBy: e.target.value })}
+                        className="flex-1 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                      >
+                        {user && (
+                          <option value={user.id}>You (@{profiles[user.id]?.username ?? "me"})</option>
+                        )}
+                        {rsvps
+                          .filter((r) => r.user_id !== user?.id)
+                          .map((r) => {
+                            const p = profiles[r.user_id];
+                            return (
+                              <option key={r.user_id} value={r.user_id}>
+                                @{p?.username ?? "user"} — {p?.display_name ?? "?"}
+                              </option>
+                            );
+                          })}
+                      </select>
+                    </div>
+
+                    {newExpense.splitMode !== "payer" && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs text-muted-foreground">
+                            Split between ({(newExpense.participants.length || rsvps.filter((r) => r.status === "going").length)} people)
+                          </span>
+                          <div className="flex gap-2 text-xs">
+                            <button
+                              type="button"
+                              onClick={() => setNewExpense({ ...newExpense, participants: rsvps.filter((r) => r.status === "going").map((r) => r.user_id) })}
+                              className="text-brand-yellow hover:underline"
+                            >
+                              All going
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewExpense({ ...newExpense, participants: [] })}
+                              className="text-muted-foreground hover:underline"
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {rsvps.map((r) => {
+                            const p = profiles[r.user_id];
+                            const selected = newExpense.participants.includes(r.user_id);
+                            const fallbackSelected = newExpense.participants.length === 0 && r.status === "going";
+                            const active = selected || fallbackSelected;
+                            return (
+                              <button
+                                key={r.user_id}
+                                type="button"
+                                onClick={() => {
+                                  const base = newExpense.participants.length === 0
+                                    ? rsvps.filter((x) => x.status === "going").map((x) => x.user_id)
+                                    : newExpense.participants;
+                                  const next = base.includes(r.user_id)
+                                    ? base.filter((id) => id !== r.user_id)
+                                    : [...base, r.user_id];
+                                  setNewExpense({ ...newExpense, participants: next });
+                                }}
+                                className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-colors ${
+                                  active
+                                    ? "bg-brand-gradient text-black border-transparent"
+                                    : "bg-input text-muted-foreground border-border hover:border-brand-yellow"
+                                }`}
+                              >
+                                @{p?.username ?? "user"}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {newExpense.splitMode === "equal" && newExpense.amount && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            ≈ <span className="text-brand-yellow font-bold">
+                              ${(parseFloat(newExpense.amount) / Math.max(1, newExpense.participants.length || rsvps.filter((r) => r.status === "going").length)).toFixed(2)}
+                            </span> per person
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs text-muted-foreground">Split:</span>
                       {([
                         { id: "equal", label: "Equally" },
-                        { id: "payer", label: "I'll cover it" },
-                        { id: "custom", label: "Custom" },
+                        { id: "payer", label: "Payer covers" },
+                        { id: "custom", label: "Custom amounts" },
                       ] as const).map((opt) => (
                         <button
                           key={opt.id}
