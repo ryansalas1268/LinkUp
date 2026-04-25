@@ -84,7 +84,7 @@ function EventsPage() {
   const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "" });
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
-  const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "" });
+  const [newExpense, setNewExpense] = useState({ title: "", amount: "", notes: "", splitMode: "equal" as "equal" | "payer" | "custom" });
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
 
@@ -277,20 +277,27 @@ function EventsPage() {
       .single();
     if (error || !exp) { toast.error(error?.message ?? "Failed"); return; }
 
-    // Default: split equally among everyone who RSVP'd "going" (or just the payer if no one yet)
     const goingUsers = rsvps.filter((r) => r.status === "going").map((r) => r.user_id);
-    const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
-    const perPerson = Math.round((amount / splitAmong.length) * 100) / 100;
+    let sharesToInsert: { expense_id: string; user_id: string; share_amount: number }[] = [];
 
-    const sharesToInsert = splitAmong.map((uid) => ({
-      expense_id: exp.id,
-      user_id: uid,
-      share_amount: perPerson,
-    }));
+    if (newExpense.splitMode === "payer") {
+      // Payer covers it themselves — no one owes anything
+      sharesToInsert = [{ expense_id: exp.id, user_id: user.id, share_amount: amount }];
+    } else if (newExpense.splitMode === "custom") {
+      // Seed everyone going at $0 so the host can edit each share inline
+      const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
+      sharesToInsert = splitAmong.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: 0 }));
+    } else {
+      // Equal split among everyone going (or just payer if empty)
+      const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
+      const perPerson = Math.round((amount / splitAmong.length) * 100) / 100;
+      sharesToInsert = splitAmong.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: perPerson }));
+    }
+
     await supabase.from("expense_shares").insert(sharesToInsert);
 
     toast.success("Expense added!");
-    setNewExpense({ title: "", amount: "", notes: "" });
+    setNewExpense({ title: "", amount: "", notes: "", splitMode: "equal" });
     loadEventDetails(activeId);
   };
 
@@ -315,6 +322,32 @@ function EventsPage() {
   const myShare = shares
     .filter((s) => s.user_id === user?.id)
     .reduce((sum, s) => sum + Number(s.share_amount), 0);
+
+  // Settle-up: net balance per user = (paid) - (owed)
+  const balances: Record<string, number> = {};
+  expenses.forEach((e) => {
+    balances[e.paid_by] = (balances[e.paid_by] ?? 0) + Number(e.amount);
+  });
+  shares.forEach((s) => {
+    balances[s.user_id] = (balances[s.user_id] ?? 0) - Number(s.share_amount);
+  });
+  const balanceList = Object.entries(balances)
+    .filter(([, v]) => Math.abs(v) >= 0.01)
+    .sort((a, b) => b[1] - a[1]);
+
+  // Greedy settle-up: largest creditor paid by largest debtor until cleared
+  const settlements: { from: string; to: string; amount: number }[] = [];
+  const creditors = balanceList.filter(([, v]) => v > 0).map(([id, v]) => ({ id, v }));
+  const debtors = balanceList.filter(([, v]) => v < 0).map(([id, v]) => ({ id, v: -v }));
+  let ci = 0, di = 0;
+  while (ci < creditors.length && di < debtors.length) {
+    const pay = Math.min(creditors[ci].v, debtors[di].v);
+    if (pay >= 0.01) settlements.push({ from: debtors[di].id, to: creditors[ci].id, amount: Math.round(pay * 100) / 100 });
+    creditors[ci].v -= pay;
+    debtors[di].v -= pay;
+    if (creditors[ci].v < 0.01) ci++;
+    if (debtors[di].v < 0.01) di++;
+  }
 
   const priorityIcon = { high: "🔴", med: "🟡", low: "🟢" };
 
@@ -550,23 +583,77 @@ function EventsPage() {
                     })}
                   </div>
 
-                  <div className="grid grid-cols-[1fr_120px_auto] gap-2 pt-4 border-t border-border">
+                  {settlements.length > 0 && (
+                    <div className="bg-input rounded-lg p-3 mb-4 border border-border">
+                      <div className="text-sm font-bold mb-2 flex items-center gap-2">
+                        💸 Settle up
+                      </div>
+                      <div className="space-y-1">
+                        {settlements.map((s, i) => {
+                          const from = profiles[s.from];
+                          const to = profiles[s.to];
+                          return (
+                            <div key={i} className="text-xs flex items-center gap-1">
+                              <span className="text-brand-pink">@{from?.username ?? "user"}</span>
+                              <span className="text-muted-foreground">pays</span>
+                              <span className="text-brand-yellow font-bold">${s.amount.toFixed(2)}</span>
+                              <span className="text-muted-foreground">to</span>
+                              <span className="text-brand-pink">@{to?.username ?? "user"}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 pt-4 border-t border-border">
+                    <div className="grid grid-cols-[1fr_120px] gap-2">
+                      <input
+                        placeholder="What was it for? (e.g. Pizza)"
+                        value={newExpense.title}
+                        onChange={(e) => setNewExpense({ ...newExpense, title: e.target.value })}
+                        className="bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="Amount"
+                        value={newExpense.amount}
+                        onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                        className="bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                      />
+                    </div>
                     <input
-                      placeholder="What was it for? (e.g. Pizza)"
-                      value={newExpense.title}
-                      onChange={(e) => setNewExpense({ ...newExpense, title: e.target.value })}
-                      className="bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                      placeholder="Notes (optional)"
+                      value={newExpense.notes}
+                      onChange={(e) => setNewExpense({ ...newExpense, notes: e.target.value })}
+                      className="w-full bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
                     />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="Amount"
-                      value={newExpense.amount}
-                      onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                      className="bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
-                    />
-                    <button onClick={addExpense} className="bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg text-sm">Add</button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Split:</span>
+                      {([
+                        { id: "equal", label: "Equally" },
+                        { id: "payer", label: "I'll cover it" },
+                        { id: "custom", label: "Custom" },
+                      ] as const).map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setNewExpense({ ...newExpense, splitMode: opt.id })}
+                          className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
+                            newExpense.splitMode === opt.id
+                              ? "bg-brand-gradient text-black border-transparent"
+                              : "bg-input text-muted-foreground border-border hover:border-brand-yellow"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                      <button onClick={addExpense} className="ml-auto bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg text-sm">
+                        Add expense
+                      </button>
+                    </div>
                   </div>
                 </section>
               </div>
