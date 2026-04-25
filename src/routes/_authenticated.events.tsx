@@ -277,20 +277,27 @@ function EventsPage() {
       .single();
     if (error || !exp) { toast.error(error?.message ?? "Failed"); return; }
 
-    // Default: split equally among everyone who RSVP'd "going" (or just the payer if no one yet)
     const goingUsers = rsvps.filter((r) => r.status === "going").map((r) => r.user_id);
-    const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
-    const perPerson = Math.round((amount / splitAmong.length) * 100) / 100;
+    let sharesToInsert: { expense_id: string; user_id: string; share_amount: number }[] = [];
 
-    const sharesToInsert = splitAmong.map((uid) => ({
-      expense_id: exp.id,
-      user_id: uid,
-      share_amount: perPerson,
-    }));
+    if (newExpense.splitMode === "payer") {
+      // Payer covers it themselves — no one owes anything
+      sharesToInsert = [{ expense_id: exp.id, user_id: user.id, share_amount: amount }];
+    } else if (newExpense.splitMode === "custom") {
+      // Seed everyone going at $0 so the host can edit each share inline
+      const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
+      sharesToInsert = splitAmong.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: 0 }));
+    } else {
+      // Equal split among everyone going (or just payer if empty)
+      const splitAmong = goingUsers.length > 0 ? goingUsers : [user.id];
+      const perPerson = Math.round((amount / splitAmong.length) * 100) / 100;
+      sharesToInsert = splitAmong.map((uid) => ({ expense_id: exp.id, user_id: uid, share_amount: perPerson }));
+    }
+
     await supabase.from("expense_shares").insert(sharesToInsert);
 
     toast.success("Expense added!");
-    setNewExpense({ title: "", amount: "", notes: "" });
+    setNewExpense({ title: "", amount: "", notes: "", splitMode: "equal" });
     loadEventDetails(activeId);
   };
 
