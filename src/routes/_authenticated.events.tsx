@@ -323,6 +323,32 @@ function EventsPage() {
     .filter((s) => s.user_id === user?.id)
     .reduce((sum, s) => sum + Number(s.share_amount), 0);
 
+  // Settle-up: net balance per user = (paid) - (owed)
+  const balances: Record<string, number> = {};
+  expenses.forEach((e) => {
+    balances[e.paid_by] = (balances[e.paid_by] ?? 0) + Number(e.amount);
+  });
+  shares.forEach((s) => {
+    balances[s.user_id] = (balances[s.user_id] ?? 0) - Number(s.share_amount);
+  });
+  const balanceList = Object.entries(balances)
+    .filter(([, v]) => Math.abs(v) >= 0.01)
+    .sort((a, b) => b[1] - a[1]);
+
+  // Greedy settle-up: largest creditor paid by largest debtor until cleared
+  const settlements: { from: string; to: string; amount: number }[] = [];
+  const creditors = balanceList.filter(([, v]) => v > 0).map(([id, v]) => ({ id, v }));
+  const debtors = balanceList.filter(([, v]) => v < 0).map(([id, v]) => ({ id, v: -v }));
+  let ci = 0, di = 0;
+  while (ci < creditors.length && di < debtors.length) {
+    const pay = Math.min(creditors[ci].v, debtors[di].v);
+    if (pay >= 0.01) settlements.push({ from: debtors[di].id, to: creditors[ci].id, amount: Math.round(pay * 100) / 100 });
+    creditors[ci].v -= pay;
+    debtors[di].v -= pay;
+    if (creditors[ci].v < 0.01) ci++;
+    if (debtors[di].v < 0.01) di++;
+  }
+
   const priorityIcon = { high: "🔴", med: "🟡", low: "🟢" };
 
   return (
