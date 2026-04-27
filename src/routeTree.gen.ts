@@ -16,7 +16,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticated.wrapped'
 import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated.upgrade'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated.messages'
-import { Route as AuthenticatedLifecycleRouteImport } from './routes/_authenticated.lifecycle'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated.friends'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated.events'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated.calendar'
@@ -56,11 +55,6 @@ const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedLifecycleRoute = AuthenticatedLifecycleRouteImport.update({
-  id: '/lifecycle',
-  path: '/lifecycle',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedFriendsRoute = AuthenticatedFriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
@@ -90,7 +84,6 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/events': typeof AuthenticatedEventsRoute
   '/friends': typeof AuthenticatedFriendsRoute
-  '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
@@ -103,7 +96,6 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/events': typeof AuthenticatedEventsRoute
   '/friends': typeof AuthenticatedFriendsRoute
-  '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
@@ -118,7 +110,6 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/events': typeof AuthenticatedEventsRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
-  '/_authenticated/lifecycle': typeof AuthenticatedLifecycleRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
@@ -133,7 +124,6 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/events'
     | '/friends'
-    | '/lifecycle'
     | '/messages'
     | '/upgrade'
     | '/wrapped'
@@ -146,7 +136,6 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/events'
     | '/friends'
-    | '/lifecycle'
     | '/messages'
     | '/upgrade'
     | '/wrapped'
@@ -160,7 +149,6 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/events'
     | '/_authenticated/friends'
-    | '/_authenticated/lifecycle'
     | '/_authenticated/messages'
     | '/_authenticated/upgrade'
     | '/_authenticated/wrapped'
@@ -225,13 +213,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/lifecycle': {
-      id: '/_authenticated/lifecycle'
-      path: '/lifecycle'
-      fullPath: '/lifecycle'
-      preLoaderRoute: typeof AuthenticatedLifecycleRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/friends': {
       id: '/_authenticated/friends'
       path: '/friends'
@@ -267,7 +248,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRoute
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
-  AuthenticatedLifecycleRoute: typeof AuthenticatedLifecycleRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
   AuthenticatedWrappedRoute: typeof AuthenticatedWrappedRoute
@@ -278,7 +258,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRoute,
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
-  AuthenticatedLifecycleRoute: AuthenticatedLifecycleRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
   AuthenticatedWrappedRoute: AuthenticatedWrappedRoute,
@@ -298,3 +277,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
