@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban } from "lucide-react";
+import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
@@ -15,6 +16,7 @@ interface EventRow {
   description: string | null;
   location: string | null;
   scheduled_at: string | null;
+  ended_at: string | null;
   host_id: string;
 }
 
@@ -22,6 +24,8 @@ interface RsvpRow {
   event_id: string;
   user_id: string;
   status: "going" | "maybe" | "no" | "invited";
+  checked_in_at: string | null;
+  cancelled_at: string | null;
 }
 
 interface ProposalRow {
@@ -95,6 +99,7 @@ function EventsPage() {
   });
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
+  const [myRsvpsByEvent, setMyRsvpsByEvent] = useState<Record<string, RsvpRow>>({});
 
   const activeEvent = events.find((e) => e.id === activeId);
 
@@ -105,6 +110,11 @@ function EventsPage() {
 
     const { data: profs } = await supabase.from("profiles").select("id, username, display_name");
     if (profs) setProfiles(Object.fromEntries(profs.map((p) => [p.id, p])));
+
+    if (user) {
+      const { data: mine } = await supabase.from("rsvps").select("*").eq("user_id", user.id);
+      if (mine) setMyRsvpsByEvent(Object.fromEntries(mine.map((r) => [r.event_id, r as RsvpRow])));
+    }
   };
 
   const loadEventDetails = async (eventId: string) => {
@@ -118,6 +128,17 @@ function EventsPage() {
     setProposals(p ?? []);
     setTasks(t ?? []);
     setExpenses(ex ?? []);
+
+    // keep my-rsvps map in sync for sidebar badges
+    if (user) {
+      const mine = (r ?? []).find((x: RsvpRow) => x.user_id === user.id);
+      setMyRsvpsByEvent((prev) => {
+        const next = { ...prev };
+        if (mine) next[eventId] = mine as RsvpRow;
+        else delete next[eventId];
+        return next;
+      });
+    }
 
     if (p && p.length) {
       const { data: v } = await supabase.from("time_votes").select("*").in("proposal_id", p.map((x) => x.id));
@@ -134,7 +155,7 @@ function EventsPage() {
     }
   };
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); }, [user?.id]);
   useEffect(() => { if (activeId) loadEventDetails(activeId); }, [activeId]);
 
   const createEvent = async () => {
@@ -172,11 +193,42 @@ function EventsPage() {
     if (!activeId || !user) return;
     const { error } = await supabase
       .from("rsvps")
-      .upsert({ event_id: activeId, user_id: user.id, status }, { onConflict: "event_id,user_id" });
+      .upsert(
+        { event_id: activeId, user_id: user.id, status, cancelled_at: null },
+        { onConflict: "event_id,user_id" }
+      );
     if (error) { toast.error(error.message); return; }
     toast.success(`RSVP set to ${status}`);
     loadEventDetails(activeId);
   };
+
+  const checkIn = async () => {
+    if (!activeId || !user) return;
+    const { error } = await supabase
+      .from("rsvps")
+      .upsert(
+        { event_id: activeId, user_id: user.id, status: "going", checked_in_at: new Date().toISOString(), cancelled_at: null },
+        { onConflict: "event_id,user_id" }
+      );
+    if (error) { toast.error(error.message); return; }
+    toast.success("Checked in! 🎉");
+    loadEventDetails(activeId);
+  };
+
+  const cancelRSVP = async () => {
+    if (!activeId || !user) return;
+    if (!confirm("Cancel your RSVP for this event?")) return;
+    const { error } = await supabase
+      .from("rsvps")
+      .upsert(
+        { event_id: activeId, user_id: user.id, status: "no", cancelled_at: new Date().toISOString() },
+        { onConflict: "event_id,user_id" }
+      );
+    if (error) { toast.error(error.message); return; }
+    toast.success("RSVP cancelled");
+    loadEventDetails(activeId);
+  };
+
 
   // Search any user by username or display name (host can invite anyone)
   const searchUsers = async (q: string) => {
@@ -327,7 +379,20 @@ function EventsPage() {
     loadEventDetails(activeId!);
   };
 
-  const myRsvp = rsvps.find((r) => r.user_id === user?.id)?.status;
+  const myRsvpRow = rsvps.find((r) => r.user_id === user?.id);
+  const myRsvp = myRsvpRow?.status;
+
+  // Compute lifecycle state for any event for the current user
+  const lifecycleFor = (ev: EventRow, rsvp?: { status: string; checked_in_at: string | null; cancelled_at: string | null } | null): LifecycleState => {
+    return getLifecycleState({
+      scheduledAt: ev.scheduled_at,
+      endedAt: ev.ended_at,
+      rsvpStatus: (rsvp?.status as "going" | "maybe" | "no" | "invited" | undefined) ?? null,
+      checkedInAt: rsvp?.checked_in_at ?? null,
+      cancelledAt: rsvp?.cancelled_at ?? null,
+    });
+  };
+  const activeLifecycle: LifecycleState | null = activeEvent ? lifecycleFor(activeEvent, myRsvpRow) : null;
   const completedCount = tasks.filter((t) => t.completed).length;
   const progress = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
 
@@ -418,24 +483,33 @@ function EventsPage() {
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           <aside className="space-y-2">
             <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
-            {events.map((e) => (
-              <button
-                key={e.id}
-                onClick={() => setActiveId(e.id)}
-                className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                  activeId === e.id
-                    ? "bg-card border-brand-pink"
-                    : "bg-card border-border hover:border-brand-yellow"
-                }`}
-              >
-                <div className="font-bold truncate">{e.title}</div>
-                {e.scheduled_at && (
-                  <div className="text-xs text-brand-yellow mt-1">
-                    {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            {events.map((e) => {
+              const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
+              const meta = getLifecycleMeta(lc);
+              return (
+                <button
+                  key={e.id}
+                  onClick={() => setActiveId(e.id)}
+                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                    activeId === e.id
+                      ? "bg-card border-brand-pink"
+                      : "bg-card border-border hover:border-brand-yellow"
+                  }`}
+                >
+                  <div className="font-bold truncate">{e.title}</div>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {e.scheduled_at && (
+                      <span className="text-xs text-brand-yellow">
+                        {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </span>
+                    )}
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
+                      {meta.emoji} {meta.label}
+                    </span>
                   </div>
-                )}
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </aside>
 
           {activeEvent && (
@@ -443,8 +517,18 @@ function EventsPage() {
               <div className="space-y-6">
                 <section className="bg-card border border-border rounded-xl p-6">
                   <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <h2 className="text-2xl font-bold mb-1">{activeEvent.title}</h2>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h2 className="text-2xl font-bold">{activeEvent.title}</h2>
+                        {activeLifecycle && (() => {
+                          const meta = getLifecycleMeta(activeLifecycle);
+                          return (
+                            <span className={`text-xs font-bold px-2 py-1 rounded-full border ${meta.className}`}>
+                              {meta.emoji} {meta.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         Hosted by {profiles[activeEvent.host_id]?.display_name ?? "Unknown"}
                         {activeEvent.location && <> • <MapPin className="w-3 h-3 inline" /> {activeEvent.location}</>}
@@ -484,7 +568,7 @@ function EventsPage() {
                           key={s}
                           onClick={() => setRSVP(s)}
                           className={`flex-1 py-2.5 rounded-lg font-bold border transition-all ${
-                            myRsvp === s ? "scale-105" : ""
+                            myRsvp === s && !myRsvpRow?.cancelled_at ? "scale-105" : ""
                           } ${
                             s === "going" ? "bg-going/20 text-going border-going" :
                             s === "maybe" ? "bg-maybe/20 text-maybe border-maybe" :
@@ -495,6 +579,36 @@ function EventsPage() {
                         </button>
                       ))}
                     </div>
+
+                    {/* Lifecycle actions */}
+                    {activeLifecycle === "active" && !myRsvpRow?.checked_in_at && (
+                      <button
+                        onClick={checkIn}
+                        className="mt-3 w-full bg-brand-gradient text-black font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> Check in to event
+                      </button>
+                    )}
+                    {activeLifecycle === "attended" && (
+                      <p className="mt-3 text-sm text-going font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" /> You checked in
+                        {myRsvpRow?.checked_in_at && <span className="text-muted-foreground font-normal"> at {new Date(myRsvpRow.checked_in_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>}
+                      </p>
+                    )}
+                    {activeLifecycle === "upcoming" && myRsvp === "going" && !myRsvpRow?.cancelled_at && (
+                      <button
+                        onClick={cancelRSVP}
+                        className="mt-3 w-full bg-no/20 text-no border border-no font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-no/30"
+                      >
+                        <Ban className="w-4 h-4" /> Cancel RSVP
+                      </button>
+                    )}
+                    {activeLifecycle === "missed" && (
+                      <p className="mt-3 text-sm text-no font-bold">⏰ You missed this event.</p>
+                    )}
+                    {activeLifecycle === "cancelled" && (
+                      <p className="mt-3 text-sm text-no font-bold">🚫 You cancelled your RSVP.</p>
+                    )}
                   </div>
                 </section>
 

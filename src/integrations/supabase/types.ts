@@ -97,6 +97,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          ended_at: string | null
           host_id: string
           id: string
           location: string | null
@@ -107,6 +108,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          ended_at?: string | null
           host_id: string
           id?: string
           location?: string | null
@@ -117,6 +119,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          ended_at?: string | null
           host_id?: string
           id?: string
           location?: string | null
@@ -279,6 +282,8 @@ export type Database = {
       }
       rsvps: {
         Row: {
+          cancelled_at: string | null
+          checked_in_at: string | null
           created_at: string
           event_id: string
           id: string
@@ -287,6 +292,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancelled_at?: string | null
+          checked_in_at?: string | null
           created_at?: string
           event_id: string
           id?: string
@@ -295,6 +302,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancelled_at?: string | null
+          checked_in_at?: string | null
           created_at?: string
           event_id?: string
           id?: string
