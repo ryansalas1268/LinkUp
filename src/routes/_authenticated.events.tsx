@@ -342,18 +342,20 @@ function EventsPage() {
     setActiveId(remaining[0]?.id ?? null);
   };
 
-  const renameEvent = async () => {
+  const renameEvent = async (rawNext: string) => {
     if (!activeEvent || activeEvent.host_id !== user?.id) return;
-    const next = window.prompt("Rename event", activeEvent.title)?.trim();
-    if (!next || next === activeEvent.title) return;
+    const next = rawNext.trim();
+    if (!next || next === activeEvent.title) { setEditingTitle(false); return; }
     if (isDemoEventId(activeEvent.id)) {
       setEvents((prev) => prev.map((e) => (e.id === activeEvent.id ? { ...e, title: next } : e)));
+      setEditingTitle(false);
       toast.success("Renamed (demo)");
       return;
     }
     const { error } = await supabase.from("events").update({ title: next }).eq("id", activeEvent.id);
     if (error) { toast.error(error.message); return; }
     setEvents((prev) => prev.map((e) => (e.id === activeEvent.id ? { ...e, title: next } : e)));
+    setEditingTitle(false);
     toast.success("Event renamed");
   };
 
