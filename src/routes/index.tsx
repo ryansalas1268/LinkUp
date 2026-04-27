@@ -18,20 +18,20 @@ function Index() {
       <main className="max-w-6xl mx-auto px-6 pt-10 pb-20 md:pt-14">
         <section className="text-center space-y-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
-            Plan hangouts with{" "}
+            Let your plans make it out{" "}
             <span className="bg-brand-gradient bg-clip-text text-transparent">
-              your crew
+              the groupchat
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            RSVP, vote on times, share tasks, and chat all in one place. Make it out of the groupchat.
+            RSVP, assign tasks, plan logistics, all in one place.
           </p>
           <div className="flex gap-4 justify-center pt-4">
             <Link
               to="/signup"
               className="bg-brand-gradient text-black font-bold px-8 py-3 rounded-full shadow-brand hover:scale-105 transition-transform"
             >
-              Get started free
+              Get started
             </Link>
             <Link
               to="/login"
