@@ -567,18 +567,18 @@ function EventsPage() {
 
           {activeEvent && (
             <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
-              <div className="space-y-8 sm:space-y-6">
+              <div className="space-y-6 sm:space-y-6">
                 <button
                   onClick={() => setActiveId(null)}
-                  className="lg:hidden flex items-center gap-1 text-sm font-bold text-brand-yellow hover:underline -mb-2"
+                  className="lg:hidden flex items-center gap-1 text-xs font-bold text-brand-yellow hover:underline"
                 >
                   ← Back to events
                 </button>
-                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6 -mt-4 sm:mt-0">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h2 className="text-2xl font-bold">{activeEvent.title}</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
                         {activeLifecycle && (() => {
                           const meta = getLifecycleMeta(activeLifecycle);
                           return (
