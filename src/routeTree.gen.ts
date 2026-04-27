@@ -14,7 +14,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticated.wrapped'
-import { Route as AuthenticatedRulesRouteImport } from './routes/_authenticated.rules'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated.messages'
 import { Route as AuthenticatedLifecycleRouteImport } from './routes/_authenticated.lifecycle'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated.friends'
@@ -43,11 +42,6 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedWrappedRoute = AuthenticatedWrappedRouteImport.update({
   id: '/wrapped',
   path: '/wrapped',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedRulesRoute = AuthenticatedRulesRouteImport.update({
-  id: '/rules',
-  path: '/rules',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
@@ -85,7 +79,6 @@ export interface FileRoutesByFullPath {
   '/friends': typeof AuthenticatedFriendsRoute
   '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
-  '/rules': typeof AuthenticatedRulesRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRoutesByTo {
@@ -97,7 +90,6 @@ export interface FileRoutesByTo {
   '/friends': typeof AuthenticatedFriendsRoute
   '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
-  '/rules': typeof AuthenticatedRulesRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRoutesById {
@@ -111,7 +103,6 @@ export interface FileRoutesById {
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/lifecycle': typeof AuthenticatedLifecycleRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
-  '/_authenticated/rules': typeof AuthenticatedRulesRoute
   '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRouteTypes {
@@ -125,7 +116,6 @@ export interface FileRouteTypes {
     | '/friends'
     | '/lifecycle'
     | '/messages'
-    | '/rules'
     | '/wrapped'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -137,7 +127,6 @@ export interface FileRouteTypes {
     | '/friends'
     | '/lifecycle'
     | '/messages'
-    | '/rules'
     | '/wrapped'
   id:
     | '__root__'
@@ -150,7 +139,6 @@ export interface FileRouteTypes {
     | '/_authenticated/friends'
     | '/_authenticated/lifecycle'
     | '/_authenticated/messages'
-    | '/_authenticated/rules'
     | '/_authenticated/wrapped'
   fileRoutesById: FileRoutesById
 }
@@ -198,13 +186,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWrappedRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/rules': {
-      id: '/_authenticated/rules'
-      path: '/rules'
-      fullPath: '/rules'
-      preLoaderRoute: typeof AuthenticatedRulesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/messages': {
       id: '/_authenticated/messages'
       path: '/messages'
@@ -249,7 +230,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedLifecycleRoute: typeof AuthenticatedLifecycleRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
-  AuthenticatedRulesRoute: typeof AuthenticatedRulesRoute
   AuthenticatedWrappedRoute: typeof AuthenticatedWrappedRoute
 }
 
@@ -259,7 +239,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedLifecycleRoute: AuthenticatedLifecycleRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
-  AuthenticatedRulesRoute: AuthenticatedRulesRoute,
   AuthenticatedWrappedRoute: AuthenticatedWrappedRoute,
 }
 
