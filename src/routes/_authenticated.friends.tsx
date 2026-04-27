@@ -109,13 +109,20 @@ function FriendsPage() {
 
   const sendRequest = async (addresseeId: string) => {
     if (!user) return;
+    // Demo accounts auto-accept friend requests
+    const { data: target } = await supabase
+      .from("profiles")
+      .select("is_demo")
+      .eq("id", addresseeId)
+      .maybeSingle();
+    const isDemo = !!(target as { is_demo?: boolean } | null)?.is_demo;
     const { error } = await supabase.from("friendships").insert({
       requester_id: user.id,
       addressee_id: addresseeId,
-      status: "pending",
+      status: isDemo ? "accepted" : "pending",
     });
     if (error) { toast.error("Already requested or friends"); return; }
-    toast.success("Friend request sent!");
+    toast.success(isDemo ? "Friend added! (demo)" : "Friend request sent!");
     loadData();
   };
 
