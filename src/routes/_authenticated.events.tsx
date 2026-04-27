@@ -407,15 +407,21 @@ function EventsPage() {
     setInviteResults((data ?? []).filter((p) => !existingIds.has(p.id)));
   };
 
-  // Invite someone — adds them with status 'invited'
+  // Invite someone — demo accounts auto-RSVP as "going", others get "invited"
   const invite = async (userId: string) => {
     if (!activeId) return;
     if (isDemoEventId(activeId)) { demoToast(); return; }
+    const { data: target } = await supabase
+      .from("profiles")
+      .select("is_demo")
+      .eq("id", userId)
+      .maybeSingle();
+    const isDemo = !!(target as { is_demo?: boolean } | null)?.is_demo;
     const { error } = await supabase
       .from("rsvps")
-      .insert({ event_id: activeId, user_id: userId, status: "invited" });
+      .insert({ event_id: activeId, user_id: userId, status: isDemo ? "going" : "invited" });
     if (error) { toast.error(error.message); return; }
-    toast.success("Invited!");
+    toast.success(isDemo ? "Demo account joined as Going!" : "Invited!");
     setInviteQuery("");
     setInviteResults([]);
     loadEventDetails(activeId);
