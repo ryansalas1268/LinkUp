@@ -49,6 +49,7 @@ interface EventRow {
   scheduled_at: string | null;
   ended_at: string | null;
   host_id: string;
+  cover_image_url?: string | null;
 }
 
 interface RsvpRow {
