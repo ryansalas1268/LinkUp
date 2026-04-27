@@ -602,7 +602,7 @@ function EventsPage() {
               {events.map((e) => {
                 const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
                 const meta = getLifecycleMeta(lc);
-                const cover = coverFor(e.title);
+                const cover = coverFor(e.title, e.cover_image_url);
                 return (
                   <button
                     key={e.id}
