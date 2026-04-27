@@ -200,6 +200,24 @@ function EventsPage() {
   useEffect(() => { loadAll(); }, [user?.id]);
   useEffect(() => { if (activeId) loadEventDetails(activeId); }, [activeId]);
 
+  const uploadCover = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5 MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image"); return; }
+    setUploadingCover(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("event-covers").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type,
+    });
+    if (error) { toast.error(error.message); setUploadingCover(false); return; }
+    const { data } = supabase.storage.from("event-covers").getPublicUrl(path);
+    setNewEvent((prev) => ({ ...prev, cover_image_url: data.publicUrl }));
+    setUploadingCover(false);
+  };
+
   const createEvent = async () => {
     if (!user) return;
     // BR010: title required, max 50 chars
