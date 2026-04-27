@@ -574,3 +574,35 @@ function PicksGroup({ title, flag, picks }: { title: string; flag: string; picks
     </div>
   );
 }
+
+function SuggestionsBox() {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="mb-8">
+      <div className="rounded-2xl border border-dashed border-border bg-input/30 p-4">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between gap-3 text-left"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="w-4 h-4 text-brand-yellow shrink-0" />
+            <span className="text-sm">
+              <span className="font-bold">Need ideas for next time?</span>{" "}
+              <span className="text-muted-foreground">A few hand-picked spots in DC and abroad.</span>
+            </span>
+          </div>
+          <span className="text-[11px] uppercase tracking-wider text-brand-yellow font-bold shrink-0">
+            {open ? "Hide" : "Show"}
+          </span>
+        </button>
+        {open && (
+          <div className="grid md:grid-cols-2 gap-5 mt-4 pt-4 border-t border-dashed border-border">
+            <PicksGroup title="Local — Washington, D.C." flag="🏛️" picks={DC_PICKS} />
+            <PicksGroup title="Global Bucket List" flag="🌍" picks={GLOBAL_PICKS} />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
