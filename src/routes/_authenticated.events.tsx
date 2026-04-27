@@ -265,8 +265,12 @@ function EventsPage() {
     }
     if (!activeEvent || !user || activeEvent.host_id !== user.id) {
       // Fallback: copy to clipboard for non-hosts.
-      try { await navigator.clipboard.writeText(label); toast.success(`Copied "${pick.name}" to clipboard`); }
-      catch { toast.error("Couldn't copy"); }
+      try {
+        await navigator.clipboard.writeText(label);
+        toast.success(`Copied "${pick.name}" to clipboard`);
+      } catch {
+        toast.error("Couldn't copy");
+      }
       return;
     }
     const { error } = await supabase.from("events").update({ location: label }).eq("id", activeEvent.id);
