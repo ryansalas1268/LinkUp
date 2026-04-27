@@ -263,7 +263,7 @@ function MessagesPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
-        <aside className="bg-card border border-border rounded-xl p-5 min-h-[600px]">
+        <aside className={`bg-card border border-border rounded-xl p-4 sm:p-5 lg:min-h-[600px] ${activeId ? "hidden lg:block" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Messages</h2>
             <button onClick={() => setShowNew(!showNew)} className="bg-brand-gradient text-black p-1.5 rounded-lg">
