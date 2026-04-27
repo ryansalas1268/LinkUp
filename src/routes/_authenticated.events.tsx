@@ -176,11 +176,42 @@ function EventsPage() {
     if (!activeId || !user) return;
     const { error } = await supabase
       .from("rsvps")
-      .upsert({ event_id: activeId, user_id: user.id, status }, { onConflict: "event_id,user_id" });
+      .upsert(
+        { event_id: activeId, user_id: user.id, status, cancelled_at: null },
+        { onConflict: "event_id,user_id" }
+      );
     if (error) { toast.error(error.message); return; }
     toast.success(`RSVP set to ${status}`);
     loadEventDetails(activeId);
   };
+
+  const checkIn = async () => {
+    if (!activeId || !user) return;
+    const { error } = await supabase
+      .from("rsvps")
+      .upsert(
+        { event_id: activeId, user_id: user.id, status: "going", checked_in_at: new Date().toISOString(), cancelled_at: null },
+        { onConflict: "event_id,user_id" }
+      );
+    if (error) { toast.error(error.message); return; }
+    toast.success("Checked in! 🎉");
+    loadEventDetails(activeId);
+  };
+
+  const cancelRSVP = async () => {
+    if (!activeId || !user) return;
+    if (!confirm("Cancel your RSVP for this event?")) return;
+    const { error } = await supabase
+      .from("rsvps")
+      .upsert(
+        { event_id: activeId, user_id: user.id, status: "no", cancelled_at: new Date().toISOString() },
+        { onConflict: "event_id,user_id" }
+      );
+    if (error) { toast.error(error.message); return; }
+    toast.success("RSVP cancelled");
+    loadEventDetails(activeId);
+  };
+
 
   // Search any user by username or display name (host can invite anyone)
   const searchUsers = async (q: string) => {
