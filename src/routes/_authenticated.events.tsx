@@ -118,7 +118,8 @@ function EventsPage() {
   const [shares, setShares] = useState<ExpenseShareRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileRow>>({});
   const [showNew, setShowNew] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "" });
+  const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "", cover_image_url: "" });
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
   const [newExpense, setNewExpense] = useState({
