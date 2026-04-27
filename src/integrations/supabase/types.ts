@@ -490,6 +490,7 @@ export type Database = {
         Args: { _event_id?: string; _is_direct: boolean; _title: string }
         Returns: string
       }
+      get_email_for_username: { Args: { _username: string }; Returns: string }
       get_or_create_event_chat: { Args: { _event_id: string }; Returns: string }
       has_active_premium: {
         Args: { check_env?: string; user_uuid: string }
