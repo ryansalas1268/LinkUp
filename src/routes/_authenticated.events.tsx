@@ -570,7 +570,7 @@ function EventsPage() {
               <div className="space-y-8 sm:space-y-6">
                 <button
                   onClick={() => setActiveId(null)}
-                  className="lg:hidden flex items-center gap-1 text-sm font-bold text-brand-yellow hover:underline -mb-2"
+                  className="lg:hidden inline-flex items-center gap-1.5 text-sm font-bold text-brand-yellow hover:underline py-2 pb-3"
                 >
                   ← Back to events
                 </button>
