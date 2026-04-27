@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Sparkles, Calendar, DollarSign, MapPin, Trophy, X, Users, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { DC_PICKS, GLOBAL_PICKS, type Pick as TopPick } from "@/lib/topPicks";
 import coverRooftop from "@/assets/event-rooftop.jpg";
 import coverVolleyball from "@/assets/event-volleyball.jpg";
 import coverPotluck from "@/assets/event-potluck.jpg";
