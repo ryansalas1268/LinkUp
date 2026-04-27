@@ -504,35 +504,65 @@ function EventsPage() {
         </div>
       ) : (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-          <aside className="space-y-2">
-            <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
-            {events.map((e) => {
-              const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
-              const meta = getLifecycleMeta(lc);
-              return (
-                <button
-                  key={e.id}
-                  onClick={() => setActiveId(e.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                    activeId === e.id
-                      ? "bg-card border-brand-pink"
-                      : "bg-card border-border hover:border-brand-yellow"
-                  }`}
-                >
-                  <div className="font-bold truncate">{e.title}</div>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    {e.scheduled_at && (
-                      <span className="text-xs text-brand-yellow">
-                        {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+          <aside className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
+              {events.map((e) => {
+                const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
+                const meta = getLifecycleMeta(lc);
+                return (
+                  <button
+                    key={e.id}
+                    onClick={() => setActiveId(e.id)}
+                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                      activeId === e.id
+                        ? "bg-card border-brand-pink"
+                        : "bg-card border-border hover:border-brand-yellow"
+                    }`}
+                  >
+                    <div className="font-bold truncate">{e.title}</div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {e.scheduled_at && (
+                        <span className="text-xs text-brand-yellow">
+                          {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
+                        {meta.emoji} {meta.label}
                       </span>
-                    )}
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
-                      {meta.emoji} {meta.label}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {activeEvent && (
+              <section className="bg-card border border-border rounded-xl p-4">
+                <h2 className="text-base font-bold mb-2">Invite People ➕</h2>
+                <p className="text-xs text-muted-foreground mb-2">Search any user by username or name.</p>
+                <input
+                  placeholder="Search users…"
+                  value={inviteQuery}
+                  onChange={(e) => searchUsers(e.target.value)}
+                  className="w-full bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm mb-2"
+                />
+                {inviteResults.length > 0 && (
+                  <ul className="space-y-1 mb-2">
+                    {inviteResults.map((p) => (
+                      <li key={p.id} className="flex items-center gap-2 bg-input p-2 rounded text-sm">
+                        <span className="text-brand-yellow font-bold flex-1 truncate">@{p.username}</span>
+                        <button onClick={() => invite(p.id)} className="bg-brand-gradient text-black font-bold text-xs px-3 py-1 rounded">
+                          Invite
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {inviteQuery && inviteResults.length === 0 && (
+                  <p className="text-xs italic text-muted-foreground">No matches.</p>
+                )}
+              </section>
+            )}
           </aside>
 
           {activeEvent && (
@@ -632,49 +662,6 @@ function EventsPage() {
                     {activeLifecycle === "cancelled" && (
                       <p className="mt-3 text-sm text-no font-bold">🚫 You cancelled your RSVP.</p>
                     )}
-                  </div>
-                </section>
-
-                <section className="bg-card border border-border rounded-xl p-6">
-                  <h2 className="text-xl font-bold mb-1">Vote on a Time 🕒</h2>
-                  <p className="text-sm text-muted-foreground mb-4">Select the time that works best for you!</p>
-
-                  {/* BR011: ≥1 proposed time required to finalize */}
-                  {proposals.length === 0 && !activeEvent.scheduled_at && (
-                    <div className="flex items-start gap-2 bg-maybe/10 border border-maybe/40 text-maybe rounded-lg p-3 mb-4 text-xs">
-                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                      <span><strong>BR011:</strong> Propose at least one date/time below before this event can be finalized.</span>
-                    </div>
-                  )}
-
-                  <div className="space-y-2 mb-4">
-                    {proposals.length === 0 && <p className="text-sm text-muted-foreground italic">No times proposed yet.</p>}
-                    {proposals.map((p) => {
-                      const count = votes.filter((v) => v.proposal_id === p.id).length;
-                      const voted = votes.some((v) => v.proposal_id === p.id && v.user_id === user?.id);
-                      return (
-                        <div key={p.id} className="flex items-center gap-3 bg-input p-3 rounded-lg">
-                          <button
-                            onClick={() => vote(p.id)}
-                            className={`px-3 py-1 rounded font-bold text-sm ${voted ? "bg-brand-yellow text-black" : "bg-brand-pink text-black"}`}
-                          >
-                            {voted ? "✓" : "+1"}
-                          </button>
-                          <span className="flex-1">{new Date(p.proposed_time).toLocaleString()}</span>
-                          <span className="text-sm text-muted-foreground">{count} vote{count === 1 ? "" : "s"}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex gap-2 pt-4 border-t border-border">
-                    <input
-                      type="datetime-local"
-                      value={newProposal}
-                      onChange={(e) => setNewProposal(e.target.value)}
-                      className="flex-1 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow"
-                    />
-                    <button onClick={addProposal} className="bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg">Propose</button>
                   </div>
                 </section>
 
@@ -944,34 +931,54 @@ function EventsPage() {
                 </section>
 
                 <section className="bg-card border border-border rounded-xl p-6">
-                  <h2 className="text-xl font-bold mb-3">Invite People ➕</h2>
-                  <p className="text-xs text-muted-foreground mb-3">Search any user by username or name.</p>
-                  <input
-                    placeholder="Search users…"
-                    value={inviteQuery}
-                    onChange={(e) => searchUsers(e.target.value)}
-                    className="w-full bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm mb-2"
-                  />
-                  {inviteResults.length > 0 && (
-                    <ul className="space-y-1 mb-2">
-                      {inviteResults.map((p) => (
-                        <li key={p.id} className="flex items-center gap-2 bg-input p-2 rounded text-sm">
-                          <span className="text-brand-yellow font-bold flex-1">@{p.username}</span>
-                          <span className="text-muted-foreground text-xs">"{p.display_name}"</span>
-                          <button onClick={() => invite(p.id)} className="bg-brand-gradient text-black font-bold text-xs px-3 py-1 rounded">
-                            Invite
+                  <h2 className="text-xl font-bold mb-1">Vote on a Time 🕒</h2>
+                  <p className="text-sm text-muted-foreground mb-4">Select the time that works best for you!</p>
+
+                  {/* BR011: ≥1 proposed time required to finalize */}
+                  {proposals.length === 0 && !activeEvent.scheduled_at && (
+                    <div className="flex items-start gap-2 bg-maybe/10 border border-maybe/40 text-maybe rounded-lg p-3 mb-4 text-xs">
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                      <span><strong>BR011:</strong> Propose at least one date/time below before this event can be finalized.</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 mb-4">
+                    {proposals.length === 0 && <p className="text-sm text-muted-foreground italic">No times proposed yet.</p>}
+                    {proposals.map((p) => {
+                      const count = votes.filter((v) => v.proposal_id === p.id).length;
+                      const voted = votes.some((v) => v.proposal_id === p.id && v.user_id === user?.id);
+                      return (
+                        <div key={p.id} className="flex items-center gap-3 bg-input p-3 rounded-lg">
+                          <button
+                            onClick={() => vote(p.id)}
+                            className={`px-3 py-1 rounded font-bold text-sm ${voted ? "bg-brand-yellow text-black" : "bg-brand-pink text-black"}`}
+                          >
+                            {voted ? "✓" : "+1"}
                           </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {inviteQuery && inviteResults.length === 0 && (
-                    <p className="text-xs italic text-muted-foreground">No matches.</p>
-                  )}
+                          <span className="flex-1 text-sm">{new Date(p.proposed_time).toLocaleString()}</span>
+                          <span className="text-sm text-muted-foreground">{count} vote{count === 1 ? "" : "s"}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex gap-2 pt-4 border-t border-border">
+                    <input
+                      type="datetime-local"
+                      value={newProposal}
+                      onChange={(e) => setNewProposal(e.target.value)}
+                      className="flex-1 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                    />
+                    <button onClick={addProposal} className="bg-brand-gradient text-black font-bold px-4 py-2 rounded-lg text-sm">Propose</button>
+                  </div>
                 </section>
 
-                <section className="bg-card border border-border rounded-xl p-6">
-                  <h2 className="text-xl font-bold mb-3">Guestlist 👥</h2>
+                <details className="bg-card border border-border rounded-xl p-6 group">
+                  <summary className="cursor-pointer list-none flex items-center justify-between">
+                    <h2 className="text-xl font-bold">Guestlist 👥 <span className="text-sm font-normal text-muted-foreground">({rsvps.length})</span></h2>
+                    <span className="text-brand-yellow group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                  </summary>
+                  <div className="mt-4">
                   {activeEvent.host_id === user?.id && (
                     <p className="text-xs text-muted-foreground italic mb-3">As the host you can change anyone's RSVP.</p>
                   )}
@@ -1067,7 +1074,8 @@ function EventsPage() {
                       );
                     })}
                   </ul>
-                </section>
+                  </div>
+                </details>
               </div>
             </div>
           )}
