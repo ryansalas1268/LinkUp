@@ -551,6 +551,38 @@ function EventsPage() {
             className="w-full bg-input px-4 py-3 rounded-lg border border-border focus:outline-none focus:border-brand-yellow"
             rows={2}
           />
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground font-bold mb-2">Cover image (optional)</label>
+            {newEvent.cover_image_url ? (
+              <div className="relative rounded-lg overflow-hidden border border-border">
+                <img src={newEvent.cover_image_url} alt="Cover preview" className="w-full h-40 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setNewEvent({ ...newEvent, cover_image_url: "" })}
+                  className="absolute top-2 right-2 bg-black/70 hover:bg-black text-white rounded-full p-1.5"
+                  aria-label="Remove cover image"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 w-full bg-input border border-dashed border-border rounded-lg px-4 py-6 cursor-pointer hover:border-brand-yellow transition-colors">
+                <Plus className="w-4 h-4" />
+                <span className="text-sm">{uploadingCover ? "Uploading…" : "Upload cover image"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingCover}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadCover(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            )}
+          </div>
           <div className="flex gap-2">
             <button onClick={createEvent} className="bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg">Create</button>
             <button onClick={() => setShowNew(false)} className="bg-input px-5 py-2 rounded-lg">Cancel</button>
