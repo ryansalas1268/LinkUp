@@ -99,6 +99,7 @@ function EventsPage() {
   });
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
+  const [myRsvpsByEvent, setMyRsvpsByEvent] = useState<Record<string, RsvpRow>>({});
 
   const activeEvent = events.find((e) => e.id === activeId);
 
@@ -109,6 +110,11 @@ function EventsPage() {
 
     const { data: profs } = await supabase.from("profiles").select("id, username, display_name");
     if (profs) setProfiles(Object.fromEntries(profs.map((p) => [p.id, p])));
+
+    if (user) {
+      const { data: mine } = await supabase.from("rsvps").select("*").eq("user_id", user.id);
+      if (mine) setMyRsvpsByEvent(Object.fromEntries(mine.map((r) => [r.event_id, r as RsvpRow])));
+    }
   };
 
   const loadEventDetails = async (eventId: string) => {
