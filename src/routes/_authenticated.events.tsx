@@ -1344,6 +1344,16 @@ function EventsPage() {
                           </button>
                           <span className="flex-1 text-sm">{new Date(p.proposed_time).toLocaleString()}</span>
                           <span className="text-sm text-muted-foreground">{count} vote{count === 1 ? "" : "s"}</span>
+                          {activeEvent.host_id === user?.id && (
+                            <button
+                              onClick={() => deleteProposal(p.id)}
+                              className="text-muted-foreground hover:text-destructive shrink-0"
+                              title="Remove time"
+                              aria-label="Remove proposed time"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       );
                     })}
