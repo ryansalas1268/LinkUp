@@ -321,7 +321,10 @@ function EventsPage() {
     setActiveId(data.id);
   };
 
+  const demoToast = () => toast("This is a demo guest event — changes aren't saved.", { icon: "👀" });
+
   const deleteEvent = async (id: string) => {
+    if (isDemoEventId(id)) { demoToast(); return; }
     if (!confirm("Delete this event?")) return;
     const { error } = await supabase.from("events").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
