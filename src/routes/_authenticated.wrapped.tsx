@@ -321,7 +321,7 @@ function WrappedPage() {
                 }`}
               >
                 <img
-                  src={HIGHLIGHT_IMAGES[i % HIGHLIGHT_IMAGES.length]}
+                  src={coverFor(e.title, i)}
                   alt={e.title}
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
