@@ -178,49 +178,6 @@ function FriendsPage() {
           </section>
 
           <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
-            <h2 className="text-xl font-bold mb-1">Invite Off-App Friends 💌</h2>
-            <p className="text-sm text-muted-foreground mb-4">Not on LinkUp yet? Send them an invite by email or text.</p>
-
-            <div className="flex flex-col sm:flex-row gap-2 mb-3">
-              <input
-                value={inviteContact}
-                onChange={(e) => setInviteContact(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendInvite()}
-                placeholder="friend@email.com or +1 555 123 4567"
-                className="flex-1 bg-input px-4 py-3 rounded-lg border border-border focus:outline-none focus:border-brand-yellow"
-              />
-              <button
-                onClick={sendInvite}
-                className="bg-brand-gradient text-black font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform"
-              >
-                {isPhone(inviteContact) && !isEmail(inviteContact) ? (
-                  <><MessageSquare className="w-4 h-4" /> Text invite</>
-                ) : (
-                  <><Mail className="w-4 h-4" /> Send invite</>
-                )}
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={shareInvite}
-                className="flex-1 bg-input hover:bg-input/70 border border-border px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <Share2 className="w-4 h-4" /> Share link
-              </button>
-              <button
-                onClick={copyInviteLink}
-                className="flex-1 bg-input hover:bg-input/70 border border-border px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <Copy className="w-4 h-4" /> Copy invite
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-3 italic">
-              We'll open your email or SMS app with a pre-filled invite — no spam, ever.
-            </p>
-          </section>
-
-          <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
             <h2 className="text-xl font-bold mb-1">My Network 👥</h2>
             <p className="text-sm text-muted-foreground mb-4">{accepted.length} connected friend{accepted.length === 1 ? "" : "s"}</p>
             <ul className="divide-y divide-border">
@@ -271,6 +228,49 @@ function FriendsPage() {
                 );
               })}
             </ul>
+          </section>
+
+          <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
+            <h2 className="text-xl font-bold mb-1">Invite Off-App Friends 💌</h2>
+            <p className="text-sm text-muted-foreground mb-4">Not on LinkUp yet? Send them an invite by email or text.</p>
+
+            <div className="flex flex-col sm:flex-row gap-2 mb-3">
+              <input
+                value={inviteContact}
+                onChange={(e) => setInviteContact(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendInvite()}
+                placeholder="friend@email.com or +1 555 123 4567"
+                className="flex-1 bg-input px-4 py-3 rounded-lg border border-border focus:outline-none focus:border-brand-yellow"
+              />
+              <button
+                onClick={sendInvite}
+                className="bg-brand-gradient text-black font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform"
+              >
+                {isPhone(inviteContact) && !isEmail(inviteContact) ? (
+                  <><MessageSquare className="w-4 h-4" /> Text invite</>
+                ) : (
+                  <><Mail className="w-4 h-4" /> Send invite</>
+                )}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={shareInvite}
+                className="flex-1 bg-input hover:bg-input/70 border border-border px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Share2 className="w-4 h-4" /> Share link
+              </button>
+              <button
+                onClick={copyInviteLink}
+                className="flex-1 bg-input hover:bg-input/70 border border-border px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Copy className="w-4 h-4" /> Copy invite
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3 italic">
+              We'll open your email or SMS app with a pre-filled invite — no spam, ever.
+            </p>
           </section>
 
           {outgoing.length > 0 && (
