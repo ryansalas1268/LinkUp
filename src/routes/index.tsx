@@ -24,7 +24,7 @@ function Index() {
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            RSVP, vote on times, share tasks, and chat — all in one place. Stop juggling group texts.
+            RSVP, vote on times, share tasks, and chat all in one place. Let your plans leave the gc.
           </p>
           <div className="flex gap-4 justify-center pt-4">
             <Link
