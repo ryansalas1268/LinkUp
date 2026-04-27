@@ -413,7 +413,25 @@ function WrappedPage() {
         </section>
       </div>
 
+      {/* Top Picks — inspiration for next year's plans */}
+      <section className="bg-card border border-border rounded-2xl p-6 mb-8">
+        <div className="flex items-baseline justify-between mb-1">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-brand-pink" /> Top Picks for Next Year
+          </h2>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Inspiration</span>
+        </div>
+        <p className="text-xs text-muted-foreground mb-5">
+          Hand-picked spots to fuel your next plans. Tap any spot to copy it for your next event.
+        </p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <PicksGroup title="Local — Washington, D.C." flag="🏛️" picks={DC_PICKS} />
+          <PicksGroup title="Global Bucket List" flag="🌍" picks={GLOBAL_PICKS} />
+        </div>
+      </section>
+
       {/* Event history */}
+
       <section className="bg-card border border-border rounded-2xl p-6">
         <h2 className="text-xl font-bold mb-1">Event History</h2>
         <p className="text-xs text-muted-foreground mb-4">{sortedHistory.length} event{sortedHistory.length === 1 ? "" : "s"} in {year} — tap to revisit.</p>
