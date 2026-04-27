@@ -39,6 +39,7 @@ function CalendarPage() {
   const [year, setYear] = useState(today.getFullYear());
   const [events, setEvents] = useState<EventRow[]>([]);
   const [tasks, setTasks] = useState<(TaskRow & { event_title?: string })[]>([]);
+  const [openEvents, setOpenEvents] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     (async () => {
