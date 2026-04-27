@@ -30,7 +30,8 @@ const KEYWORD_COVERS: { match: RegExp; img: string }[] = [
   { match: /picnic|blossom|park/i, img: coverPicnic },
   { match: /brunch|breakfast|mimosa|pancake/i, img: coverBrunch },
 ];
-function coverFor(title: string): string | null {
+function coverFor(title: string, customUrl?: string | null): string | null {
+  if (customUrl) return customUrl;
   if (COVER_BY_TITLE[title]) return COVER_BY_TITLE[title];
   for (const k of KEYWORD_COVERS) if (k.match.test(title)) return k.img;
   return null;
