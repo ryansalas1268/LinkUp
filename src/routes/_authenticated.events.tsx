@@ -760,15 +760,15 @@ function EventsPage() {
                 <h2 className="text-sm font-bold text-muted-foreground uppercase">Your events</h2>
                 <div className="flex bg-input border border-border rounded-full p-0.5">
                   {([
-                    { id: "soonest", label: "Soonest" },
-                    { id: "recent", label: "Recent" },
+                    { id: "upcoming", label: "Upcoming" },
+                    { id: "past", label: "Past" },
                   ] as const).map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
-                      onClick={() => setSortMode(opt.id)}
+                      onClick={() => setListMode(opt.id)}
                       className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full transition-colors ${
-                        sortMode === opt.id
+                        listMode === opt.id
                           ? "bg-brand-gradient text-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
@@ -779,7 +779,15 @@ function EventsPage() {
                 </div>
               </div>
               {(() => {
-                const renderCard = (e: typeof events[number]) => {
+                const list = listMode === "upcoming" ? upcomingEvents : pastEvents;
+                if (list.length === 0) {
+                  return (
+                    <p className="text-xs text-muted-foreground italic">
+                      {listMode === "upcoming" ? "Nothing upcoming." : "No past events."}
+                    </p>
+                  );
+                }
+                return list.map((e) => {
                   const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
                   const meta = getLifecycleMeta(lc);
                   const cover = coverFor(e.title, e.cover_image_url);
@@ -823,27 +831,7 @@ function EventsPage() {
                       </div>
                     </button>
                   );
-                };
-                return (
-                  <>
-                    <div>
-                      <h3 className="text-[10px] font-bold uppercase tracking-wider text-brand-pink mb-2">Upcoming</h3>
-                      {upcomingEvents.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic mb-3">Nothing upcoming.</p>
-                      ) : (
-                        <div className="space-y-2 mb-4">{upcomingEvents.map(renderCard)}</div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Past</h3>
-                      {pastEvents.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic">No past events.</p>
-                      ) : (
-                        <div className="space-y-2">{pastEvents.map(renderCard)}</div>
-                      )}
-                    </div>
-                  </>
-                );
+                });
               })()}
             </div>
 
