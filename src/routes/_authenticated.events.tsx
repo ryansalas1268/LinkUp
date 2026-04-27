@@ -504,35 +504,65 @@ function EventsPage() {
         </div>
       ) : (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-          <aside className="space-y-2">
-            <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
-            {events.map((e) => {
-              const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
-              const meta = getLifecycleMeta(lc);
-              return (
-                <button
-                  key={e.id}
-                  onClick={() => setActiveId(e.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                    activeId === e.id
-                      ? "bg-card border-brand-pink"
-                      : "bg-card border-border hover:border-brand-yellow"
-                  }`}
-                >
-                  <div className="font-bold truncate">{e.title}</div>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    {e.scheduled_at && (
-                      <span className="text-xs text-brand-yellow">
-                        {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+          <aside className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
+              {events.map((e) => {
+                const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
+                const meta = getLifecycleMeta(lc);
+                return (
+                  <button
+                    key={e.id}
+                    onClick={() => setActiveId(e.id)}
+                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                      activeId === e.id
+                        ? "bg-card border-brand-pink"
+                        : "bg-card border-border hover:border-brand-yellow"
+                    }`}
+                  >
+                    <div className="font-bold truncate">{e.title}</div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {e.scheduled_at && (
+                        <span className="text-xs text-brand-yellow">
+                          {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
+                        {meta.emoji} {meta.label}
                       </span>
-                    )}
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
-                      {meta.emoji} {meta.label}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {activeEvent && (
+              <section className="bg-card border border-border rounded-xl p-4">
+                <h2 className="text-base font-bold mb-2">Invite People ➕</h2>
+                <p className="text-xs text-muted-foreground mb-2">Search any user by username or name.</p>
+                <input
+                  placeholder="Search users…"
+                  value={inviteQuery}
+                  onChange={(e) => searchUsers(e.target.value)}
+                  className="w-full bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm mb-2"
+                />
+                {inviteResults.length > 0 && (
+                  <ul className="space-y-1 mb-2">
+                    {inviteResults.map((p) => (
+                      <li key={p.id} className="flex items-center gap-2 bg-input p-2 rounded text-sm">
+                        <span className="text-brand-yellow font-bold flex-1 truncate">@{p.username}</span>
+                        <button onClick={() => invite(p.id)} className="bg-brand-gradient text-black font-bold text-xs px-3 py-1 rounded">
+                          Invite
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {inviteQuery && inviteResults.length === 0 && (
+                  <p className="text-xs italic text-muted-foreground">No matches.</p>
+                )}
+              </section>
+            )}
           </aside>
 
           {activeEvent && (
