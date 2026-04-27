@@ -517,8 +517,18 @@ function EventsPage() {
               <div className="space-y-6">
                 <section className="bg-card border border-border rounded-xl p-6">
                   <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <h2 className="text-2xl font-bold mb-1">{activeEvent.title}</h2>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h2 className="text-2xl font-bold">{activeEvent.title}</h2>
+                        {activeLifecycle && (() => {
+                          const meta = getLifecycleMeta(activeLifecycle);
+                          return (
+                            <span className={`text-xs font-bold px-2 py-1 rounded-full border ${meta.className}`}>
+                              {meta.emoji} {meta.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         Hosted by {profiles[activeEvent.host_id]?.display_name ?? "Unknown"}
                         {activeEvent.location && <> • <MapPin className="w-3 h-3 inline" /> {activeEvent.location}</>}
