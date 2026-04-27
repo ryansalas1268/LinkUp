@@ -533,3 +533,58 @@ function Standout({
     </div>
   );
 }
+
+function PicksGroup({ title, flag, picks }: { title: string; flag: string; picks: TopPick[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? picks : picks.slice(0, 6);
+  const copyPick = async (p: TopPick) => {
+    const label = `${p.name} — ${p.area}`;
+    try {
+      await navigator.clipboard.writeText(label);
+      toast.success(`Copied "${p.name}"`);
+    } catch {
+      toast.error("Couldn't copy");
+    }
+  };
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+          <span className="mr-1">{flag}</span>{title}
+        </p>
+        {picks.length > 6 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="text-[11px] text-brand-yellow font-bold hover:underline"
+          >
+            {expanded ? "Show less" : `Show all ${picks.length}`}
+          </button>
+        )}
+      </div>
+      <ul className="space-y-2">
+        {visible.map((p) => (
+          <li key={p.name}>
+            <button
+              type="button"
+              onClick={() => copyPick(p)}
+              className="w-full text-left bg-input hover:border-brand-yellow border border-border rounded-lg px-3 py-2.5 transition-colors group"
+            >
+              <div className="flex items-start gap-2.5">
+                <span className="text-lg leading-none mt-0.5">{p.emoji}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="font-bold text-sm group-hover:text-brand-yellow">{p.name}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold shrink-0">{p.category}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">{p.area}</div>
+                  <div className="text-xs text-muted-foreground/80 mt-0.5">{p.blurb}</div>
+                </div>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
