@@ -447,14 +447,14 @@ function EventsPage() {
   const priorityIcon = { high: "🔴", med: "🟡", low: "🟢" };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">My Events</h1>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">My Events</h1>
         <button
           onClick={() => setShowNew(!showNew)}
-          className="bg-brand-gradient text-black font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 hover:scale-105 transition-transform"
+          className="bg-brand-gradient text-black font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg flex items-center gap-2 hover:scale-105 transition-transform text-sm sm:text-base whitespace-nowrap"
         >
-          <Plus className="w-4 h-4" /> New Event
+          <Plus className="w-4 h-4" /> <span className="hidden xs:inline">New Event</span><span className="xs:hidden">New</span>
         </button>
       </div>
 
