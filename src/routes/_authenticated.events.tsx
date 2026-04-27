@@ -977,6 +977,29 @@ function EventsPage() {
                               <div className="mt-2 text-xs text-muted-foreground">
                                 Allocated <span className="text-foreground font-bold">${allocated.toFixed(2)}</span> of ${Number(exp.amount).toFixed(2)}
                               </div>
+                              {(() => {
+                                const owedShares = expShares.filter((s) => s.user_id !== exp.paid_by && Number(s.share_amount) >= 0.01);
+                                if (owedShares.length === 0) return null;
+                                return (
+                                  <div className="mt-3 pt-2 border-t border-border">
+                                    <div className="text-xs font-bold mb-1.5 flex items-center gap-1">💸 Settle up</div>
+                                    <div className="space-y-1">
+                                      {owedShares.map((s) => {
+                                        const u = profiles[s.user_id];
+                                        return (
+                                          <div key={`settle-${s.id}`} className="text-xs flex items-center gap-1 flex-wrap">
+                                            <span className="text-brand-pink">@{u?.username ?? "user"}</span>
+                                            <span className="text-muted-foreground">pays</span>
+                                            <span className="text-brand-yellow font-bold">${Number(s.share_amount).toFixed(2)}</span>
+                                            <span className="text-muted-foreground">to</span>
+                                            <span className="text-brand-pink">@{payer?.username ?? "user"}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
                         </details>
