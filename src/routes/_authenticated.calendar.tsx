@@ -97,22 +97,22 @@ function CalendarPage() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8">
-      <div className="grid lg:grid-cols-[2fr_1fr] gap-8 items-start">
-        <section className="bg-card border border-border rounded-xl p-6">
-          <div className="flex justify-between items-center mb-6">
-            <button onClick={() => changeMonth(-1)} className="bg-input border border-border text-brand-yellow px-4 py-1.5 rounded-lg hover:bg-card font-bold">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="grid lg:grid-cols-[2fr_1fr] gap-6 lg:gap-8 items-start">
+        <section className="bg-card border border-border rounded-xl p-3 sm:p-6">
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <button onClick={() => changeMonth(-1)} className="bg-input border border-border text-brand-yellow px-3 sm:px-4 py-1.5 rounded-lg hover:bg-card font-bold">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <h2 className="text-xl font-bold">{monthNames[month]} {year}</h2>
-            <button onClick={() => changeMonth(1)} className="bg-input border border-border text-brand-yellow px-4 py-1.5 rounded-lg hover:bg-card font-bold">
+            <h2 className="text-lg sm:text-xl font-bold">{monthNames[month]} {year}</h2>
+            <button onClick={() => changeMonth(1)} className="bg-input border border-border text-brand-yellow px-3 sm:px-4 py-1.5 rounded-lg hover:bg-card font-bold">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-2 text-center mb-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center mb-2">
             {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
-              <div key={d} className="font-bold text-brand-pink text-sm">{d}</div>
+              <div key={d} className="font-bold text-brand-pink text-xs sm:text-sm">{d.slice(0, window.innerWidth < 400 ? 1 : 3)}</div>
             ))}
           </div>
 
