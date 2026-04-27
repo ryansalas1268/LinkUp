@@ -1007,28 +1007,6 @@ function EventsPage() {
                     })}
                   </div>
 
-                  {settlements.length > 0 && (
-                    <div className="bg-input rounded-lg p-3 mb-4 border border-border">
-                      <div className="text-sm font-bold mb-2 flex items-center gap-2">
-                        💸 Settle up
-                      </div>
-                      <div className="space-y-1">
-                        {settlements.map((s, i) => {
-                          const from = profiles[s.from];
-                          const to = profiles[s.to];
-                          return (
-                            <div key={i} className="text-xs flex items-center gap-1">
-                              <span className="text-brand-pink">@{from?.username ?? "user"}</span>
-                              <span className="text-muted-foreground">pays</span>
-                              <span className="text-brand-yellow font-bold">${s.amount.toFixed(2)}</span>
-                              <span className="text-muted-foreground">to</span>
-                              <span className="text-brand-pink">@{to?.username ?? "user"}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
 
                   <div className="space-y-2 pt-4 border-t border-border">
                     <div className="grid grid-cols-[1fr_120px] gap-2">
