@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated.messages'
+import { Route as AuthenticatedLifecycleRouteImport } from './routes/_authenticated.lifecycle'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated.friends'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated.events'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated.calendar'
@@ -42,6 +43,11 @@ const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedLifecycleRoute = AuthenticatedLifecycleRouteImport.update({
+  id: '/lifecycle',
+  path: '/lifecycle',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedFriendsRoute = AuthenticatedFriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/events': typeof AuthenticatedEventsRoute
   '/friends': typeof AuthenticatedFriendsRoute
+  '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
 }
 export interface FileRoutesByTo {
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/events': typeof AuthenticatedEventsRoute
   '/friends': typeof AuthenticatedFriendsRoute
+  '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
 }
 export interface FileRoutesById {
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/events': typeof AuthenticatedEventsRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
+  '/_authenticated/lifecycle': typeof AuthenticatedLifecycleRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
 }
 export interface FileRouteTypes {
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/events'
     | '/friends'
+    | '/lifecycle'
     | '/messages'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/events'
     | '/friends'
+    | '/lifecycle'
     | '/messages'
   id:
     | '__root__'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/events'
     | '/_authenticated/friends'
+    | '/_authenticated/lifecycle'
     | '/_authenticated/messages'
   fileRoutesById: FileRoutesById
 }
@@ -162,6 +174,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/lifecycle': {
+      id: '/_authenticated/lifecycle'
+      path: '/lifecycle'
+      fullPath: '/lifecycle'
+      preLoaderRoute: typeof AuthenticatedLifecycleRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/friends': {
       id: '/_authenticated/friends'
       path: '/friends'
@@ -190,6 +209,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRoute
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
+  AuthenticatedLifecycleRoute: typeof AuthenticatedLifecycleRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
 }
 
@@ -197,6 +217,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRoute,
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
+  AuthenticatedLifecycleRoute: AuthenticatedLifecycleRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
 }
 
