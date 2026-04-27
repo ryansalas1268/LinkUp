@@ -14,11 +14,13 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticated.wrapped'
+import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated.upgrade'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated.messages'
 import { Route as AuthenticatedLifecycleRouteImport } from './routes/_authenticated.lifecycle'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated.friends'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated.events'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated.calendar'
+import { Route as AuthenticatedCheckoutReturnRouteImport } from './routes/_authenticated.checkout.return'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -42,6 +44,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedWrappedRoute = AuthenticatedWrappedRouteImport.update({
   id: '/wrapped',
   path: '/wrapped',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedUpgradeRoute = AuthenticatedUpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
@@ -69,6 +76,12 @@ const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCheckoutReturnRoute =
+  AuthenticatedCheckoutReturnRouteImport.update({
+    id: '/checkout/return',
+    path: '/checkout/return',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,7 +92,9 @@ export interface FileRoutesByFullPath {
   '/friends': typeof AuthenticatedFriendsRoute
   '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
+  '/upgrade': typeof AuthenticatedUpgradeRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
+  '/checkout/return': typeof AuthenticatedCheckoutReturnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,7 +105,9 @@ export interface FileRoutesByTo {
   '/friends': typeof AuthenticatedFriendsRoute
   '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
+  '/upgrade': typeof AuthenticatedUpgradeRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
+  '/checkout/return': typeof AuthenticatedCheckoutReturnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,7 +120,9 @@ export interface FileRoutesById {
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/lifecycle': typeof AuthenticatedLifecycleRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
+  '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
+  '/_authenticated/checkout/return': typeof AuthenticatedCheckoutReturnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -116,7 +135,9 @@ export interface FileRouteTypes {
     | '/friends'
     | '/lifecycle'
     | '/messages'
+    | '/upgrade'
     | '/wrapped'
+    | '/checkout/return'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -127,7 +148,9 @@ export interface FileRouteTypes {
     | '/friends'
     | '/lifecycle'
     | '/messages'
+    | '/upgrade'
     | '/wrapped'
+    | '/checkout/return'
   id:
     | '__root__'
     | '/'
@@ -139,7 +162,9 @@ export interface FileRouteTypes {
     | '/_authenticated/friends'
     | '/_authenticated/lifecycle'
     | '/_authenticated/messages'
+    | '/_authenticated/upgrade'
     | '/_authenticated/wrapped'
+    | '/_authenticated/checkout/return'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -186,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWrappedRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/upgrade': {
+      id: '/_authenticated/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof AuthenticatedUpgradeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/messages': {
       id: '/_authenticated/messages'
       path: '/messages'
@@ -221,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCalendarRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/checkout/return': {
+      id: '/_authenticated/checkout/return'
+      path: '/checkout/return'
+      fullPath: '/checkout/return'
+      preLoaderRoute: typeof AuthenticatedCheckoutReturnRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -230,7 +269,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedLifecycleRoute: typeof AuthenticatedLifecycleRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
+  AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
   AuthenticatedWrappedRoute: typeof AuthenticatedWrappedRoute
+  AuthenticatedCheckoutReturnRoute: typeof AuthenticatedCheckoutReturnRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -239,7 +280,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedLifecycleRoute: AuthenticatedLifecycleRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
+  AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
   AuthenticatedWrappedRoute: AuthenticatedWrappedRoute,
+  AuthenticatedCheckoutReturnRoute: AuthenticatedCheckoutReturnRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
