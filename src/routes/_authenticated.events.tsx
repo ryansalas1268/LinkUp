@@ -500,7 +500,7 @@ function EventsPage() {
         <div className="bg-card border border-brand-yellow rounded-xl p-6 mb-6 space-y-3">
           <div>
             <input
-              placeholder="Event title (e.g. Beach trip 🔥)"
+              placeholder="Event title"
               value={newEvent.title}
               maxLength={BR.EVENT_TITLE_MAX}
               onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
