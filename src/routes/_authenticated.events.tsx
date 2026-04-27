@@ -336,6 +336,17 @@ function EventsPage() {
 
   const setRSVP = async (status: "going" | "maybe" | "no") => {
     if (!activeId || !user) return;
+    if (isDemoEventId(activeId)) {
+      const d = DEMO_DETAILS[activeId];
+      if (d) d.myStatus = status;
+      setMyRsvpsByEvent((prev) => ({ ...prev, [activeId]: { event_id: activeId, user_id: user.id, status, checked_in_at: null, cancelled_at: null } }));
+      setRsvps((prev) => {
+        const others = prev.filter((r) => r.user_id !== user.id);
+        return [...others, { event_id: activeId, user_id: user.id, status, checked_in_at: null, cancelled_at: null }];
+      });
+      toast.success(`RSVP set to ${status}`);
+      return;
+    }
     const { error } = await supabase
       .from("rsvps")
       .upsert(
@@ -349,6 +360,7 @@ function EventsPage() {
 
   const checkIn = async () => {
     if (!activeId || !user) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase
       .from("rsvps")
       .upsert(
@@ -362,6 +374,7 @@ function EventsPage() {
 
   const cancelRSVP = async () => {
     if (!activeId || !user) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     if (!confirm("Cancel your RSVP for this event?")) return;
     const { error } = await supabase
       .from("rsvps")
@@ -391,6 +404,7 @@ function EventsPage() {
   // Invite someone — adds them with status 'invited'
   const invite = async (userId: string) => {
     if (!activeId) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase
       .from("rsvps")
       .insert({ event_id: activeId, user_id: userId, status: "invited" });
@@ -404,6 +418,7 @@ function EventsPage() {
   // Host override: change anyone's RSVP on this event (demo helper)
   const overrideRSVP = async (userId: string, status: "going" | "maybe" | "no" | "invited") => {
     if (!activeId) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase
       .from("rsvps")
       .upsert({ event_id: activeId, user_id: userId, status }, { onConflict: "event_id,user_id" });
@@ -414,6 +429,7 @@ function EventsPage() {
   // Host can remove a guest entirely
   const removeGuest = async (userId: string) => {
     if (!activeId) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase.from("rsvps").delete().eq("event_id", activeId).eq("user_id", userId);
     if (error) { toast.error(error.message); return; }
     loadEventDetails(activeId);
@@ -421,6 +437,7 @@ function EventsPage() {
 
   const addProposal = async () => {
     if (!newProposal || !activeId || !user) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase.from("time_proposals").insert({
       event_id: activeId,
       proposed_by: user.id,
@@ -434,6 +451,7 @@ function EventsPage() {
 
   const vote = async (proposalId: string) => {
     if (!user) return;
+    if (activeId && isDemoEventId(activeId)) { demoToast(); return; }
     // Single-selection: a user can vote for only one proposal per event.
     const myProposalIds = proposals.map((p) => p.id);
     const myVotes = votes.filter((v) => v.user_id === user.id && myProposalIds.includes(v.proposal_id));
@@ -455,6 +473,7 @@ function EventsPage() {
 
   const addTask = async () => {
     if (!newTask.name || !activeId || !user) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase.from("tasks").insert({
       event_id: activeId,
       created_by: user.id,
@@ -467,11 +486,16 @@ function EventsPage() {
   };
 
   const toggleTask = async (t: TaskRow) => {
+    if (activeId && isDemoEventId(activeId)) {
+      setTasks((prev) => prev.map((x) => (x.id === t.id ? { ...x, completed: !x.completed } : x)));
+      return;
+    }
     await supabase.from("tasks").update({ completed: !t.completed }).eq("id", t.id);
     loadEventDetails(activeId!);
   };
 
   const addExpense = async () => {
+    if (activeId && isDemoEventId(activeId)) { demoToast(); return; }
     if (!newExpense.title || !newExpense.amount || !activeId || !user) {
       toast.error("Expense needs a title and amount");
       return;
