@@ -7,6 +7,7 @@ import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, 
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
 import { SuggestionsBox } from "@/components/SuggestionsBox";
+import { DEMO_EVENTS, DEMO_PROFILES, DEMO_DETAILS, isDemoEventId } from "@/lib/demoGuestEvents";
 import coverRooftop from "@/assets/event-rooftop.jpg";
 import coverVolleyball from "@/assets/event-volleyball.jpg";
 import coverPotluck from "@/assets/event-potluck.jpg";
@@ -161,15 +162,25 @@ function EventsPage() {
 
   const loadAll = async () => {
     const { data: evs } = await supabase.from("events").select("*").order("created_at", { ascending: false });
-    setEvents(evs ?? []);
-    if (evs && evs.length && !activeId) setActiveId(evs[0].id);
+    const realEvents = evs ?? [];
+    const merged = [...realEvents, ...DEMO_EVENTS];
+    setEvents(merged);
+    if (merged.length && !activeId) setActiveId(merged[0].id);
 
     const { data: profs } = await supabase.from("profiles").select("id, username, display_name");
-    if (profs) setProfiles(Object.fromEntries(profs.map((p) => [p.id, p])));
+    const profileMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p]));
+    DEMO_PROFILES.forEach((p) => { if (!profileMap[p.id]) profileMap[p.id] = p; });
+    setProfiles(profileMap);
 
     if (user) {
       const { data: mine } = await supabase.from("rsvps").select("*").eq("user_id", user.id);
-      if (mine) setMyRsvpsByEvent(Object.fromEntries(mine.map((r) => [r.event_id, r as RsvpRow])));
+      const rsvpMap: Record<string, RsvpRow> = Object.fromEntries((mine ?? []).map((r) => [r.event_id, r as RsvpRow]));
+      // Inject the current user's RSVP for each demo event
+      DEMO_EVENTS.forEach((e) => {
+        const d = DEMO_DETAILS[e.id];
+        if (d) rsvpMap[e.id] = { event_id: e.id, user_id: user.id, status: d.myStatus, checked_in_at: null, cancelled_at: null };
+      });
+      setMyRsvpsByEvent(rsvpMap);
 
       const { data: fs } = await supabase
         .from("friendships")
@@ -182,6 +193,50 @@ function EventsPage() {
   };
 
   const loadEventDetails = async (eventId: string) => {
+    if (isDemoEventId(eventId)) {
+      const d = DEMO_DETAILS[eventId];
+      if (!d) return;
+      const myRsvp: RsvpRow | null = user
+        ? { event_id: eventId, user_id: user.id, status: d.myStatus, checked_in_at: null, cancelled_at: null }
+        : null;
+      const allRsvps: RsvpRow[] = [
+        ...d.rsvps.map((r) => ({ event_id: eventId, ...r })),
+        ...(myRsvp ? [myRsvp] : []),
+      ];
+      setRsvps(allRsvps);
+      setProposals([]);
+      setVotes([]);
+      setTasks(
+        d.tasks.map((t) => ({
+          id: t.id,
+          event_id: eventId,
+          task_name: t.task_name,
+          priority: t.priority,
+          completed: t.completed,
+          created_by: "demo",
+          assigned_to: t.assigned_to,
+        }))
+      );
+      const expenseRows: ExpenseRow[] = d.expenses.map((e) => ({
+        id: e.id,
+        event_id: eventId,
+        paid_by: e.paid_by,
+        title: e.title,
+        amount: e.amount,
+        notes: e.notes,
+      }));
+      setExpenses(expenseRows);
+      const shareRows: ExpenseShareRow[] = d.expenses.flatMap((e) =>
+        e.participants.map((uid) => ({
+          id: `${e.id}-${uid}`,
+          expense_id: e.id,
+          user_id: uid,
+          share_amount: e.amount / Math.max(1, e.participants.length),
+        }))
+      );
+      setShares(shareRows);
+      return;
+    }
     const [{ data: r }, { data: p }, { data: t }, { data: ex }] = await Promise.all([
       supabase.from("rsvps").select("*").eq("event_id", eventId),
       supabase.from("time_proposals").select("*").eq("event_id", eventId).order("proposed_time"),
@@ -266,7 +321,10 @@ function EventsPage() {
     setActiveId(data.id);
   };
 
+  const demoToast = () => toast("This is a demo guest event — changes aren't saved.", { icon: "👀" });
+
   const deleteEvent = async (id: string) => {
+    if (isDemoEventId(id)) { demoToast(); return; }
     if (!confirm("Delete this event?")) return;
     const { error } = await supabase.from("events").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
@@ -278,6 +336,17 @@ function EventsPage() {
 
   const setRSVP = async (status: "going" | "maybe" | "no") => {
     if (!activeId || !user) return;
+    if (isDemoEventId(activeId)) {
+      const d = DEMO_DETAILS[activeId];
+      if (d) d.myStatus = status;
+      setMyRsvpsByEvent((prev) => ({ ...prev, [activeId]: { event_id: activeId, user_id: user.id, status, checked_in_at: null, cancelled_at: null } }));
+      setRsvps((prev) => {
+        const others = prev.filter((r) => r.user_id !== user.id);
+        return [...others, { event_id: activeId, user_id: user.id, status, checked_in_at: null, cancelled_at: null }];
+      });
+      toast.success(`RSVP set to ${status}`);
+      return;
+    }
     const { error } = await supabase
       .from("rsvps")
       .upsert(
@@ -291,6 +360,7 @@ function EventsPage() {
 
   const checkIn = async () => {
     if (!activeId || !user) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase
       .from("rsvps")
       .upsert(
@@ -304,6 +374,7 @@ function EventsPage() {
 
   const cancelRSVP = async () => {
     if (!activeId || !user) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     if (!confirm("Cancel your RSVP for this event?")) return;
     const { error } = await supabase
       .from("rsvps")
@@ -333,6 +404,7 @@ function EventsPage() {
   // Invite someone — adds them with status 'invited'
   const invite = async (userId: string) => {
     if (!activeId) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase
       .from("rsvps")
       .insert({ event_id: activeId, user_id: userId, status: "invited" });
@@ -346,6 +418,7 @@ function EventsPage() {
   // Host override: change anyone's RSVP on this event (demo helper)
   const overrideRSVP = async (userId: string, status: "going" | "maybe" | "no" | "invited") => {
     if (!activeId) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase
       .from("rsvps")
       .upsert({ event_id: activeId, user_id: userId, status }, { onConflict: "event_id,user_id" });
@@ -356,6 +429,7 @@ function EventsPage() {
   // Host can remove a guest entirely
   const removeGuest = async (userId: string) => {
     if (!activeId) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase.from("rsvps").delete().eq("event_id", activeId).eq("user_id", userId);
     if (error) { toast.error(error.message); return; }
     loadEventDetails(activeId);
@@ -363,6 +437,7 @@ function EventsPage() {
 
   const addProposal = async () => {
     if (!newProposal || !activeId || !user) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase.from("time_proposals").insert({
       event_id: activeId,
       proposed_by: user.id,
@@ -376,6 +451,7 @@ function EventsPage() {
 
   const vote = async (proposalId: string) => {
     if (!user) return;
+    if (activeId && isDemoEventId(activeId)) { demoToast(); return; }
     // Single-selection: a user can vote for only one proposal per event.
     const myProposalIds = proposals.map((p) => p.id);
     const myVotes = votes.filter((v) => v.user_id === user.id && myProposalIds.includes(v.proposal_id));
@@ -397,6 +473,7 @@ function EventsPage() {
 
   const addTask = async () => {
     if (!newTask.name || !activeId || !user) return;
+    if (isDemoEventId(activeId)) { demoToast(); return; }
     const { error } = await supabase.from("tasks").insert({
       event_id: activeId,
       created_by: user.id,
@@ -409,11 +486,16 @@ function EventsPage() {
   };
 
   const toggleTask = async (t: TaskRow) => {
+    if (activeId && isDemoEventId(activeId)) {
+      setTasks((prev) => prev.map((x) => (x.id === t.id ? { ...x, completed: !x.completed } : x)));
+      return;
+    }
     await supabase.from("tasks").update({ completed: !t.completed }).eq("id", t.id);
     loadEventDetails(activeId!);
   };
 
   const addExpense = async () => {
+    if (activeId && isDemoEventId(activeId)) { demoToast(); return; }
     if (!newExpense.title || !newExpense.amount || !activeId || !user) {
       toast.error("Expense needs a title and amount");
       return;
@@ -665,7 +747,12 @@ function EventsPage() {
                       />
                     )}
                     <div className="p-3">
-                      <div className="font-bold truncate">{e.title}</div>
+                      <div className="font-bold truncate flex items-center gap-1.5">
+                        {e.title}
+                        {isDemoEventId(e.id) && (
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground border border-border rounded px-1 py-0.5 shrink-0">guest demo</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {e.scheduled_at && (
                           <span className="text-xs text-brand-yellow">
