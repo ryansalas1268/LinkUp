@@ -548,7 +548,37 @@ function EventsPage() {
             {activeEvent && (
               <section className="bg-card border border-border rounded-xl p-4">
                 <h2 className="text-base font-bold mb-2">Invite People ➕</h2>
-                <p className="text-xs text-muted-foreground mb-2">Search any user by username or name.</p>
+
+                {/* Quick-add friends not yet in the event */}
+                {(() => {
+                  const invitedIds = new Set(rsvps.map((r) => r.user_id));
+                  const quickFriends = friendIds
+                    .filter((id) => !invitedIds.has(id) && profiles[id])
+                    .slice(0, 6);
+                  if (quickFriends.length === 0) return null;
+                  return (
+                    <div className="mb-3">
+                      <p className="text-xs text-muted-foreground mb-1.5">Add a friend:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {quickFriends.map((id) => {
+                          const p = profiles[id];
+                          return (
+                            <button
+                              key={id}
+                              onClick={() => invite(id)}
+                              className="bg-input hover:bg-brand-gradient hover:text-black border border-border hover:border-transparent text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors"
+                              title={`Add ${p.display_name} to this event`}
+                            >
+                              + @{p.username}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <p className="text-xs text-muted-foreground mb-2">Or search any user by username or name.</p>
                 <input
                   placeholder="Search users…"
                   value={inviteQuery}
@@ -560,6 +590,9 @@ function EventsPage() {
                     {inviteResults.map((p) => (
                       <li key={p.id} className="flex items-center gap-2 bg-input p-2 rounded text-sm">
                         <span className="text-brand-yellow font-bold flex-1 truncate">@{p.username}</span>
+                        {friendIds.includes(p.id) && (
+                          <span className="text-[10px] uppercase tracking-wider bg-going/20 text-going px-1.5 py-0.5 rounded font-bold">friend</span>
+                        )}
                         <button onClick={() => invite(p.id)} className="bg-brand-gradient text-black font-bold text-xs px-3 py-1 rounded">
                           Invite
                         </button>
