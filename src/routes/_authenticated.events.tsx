@@ -767,6 +767,7 @@ function EventsPage() {
                       <p className="mt-3 text-sm text-no font-bold">🚫 You cancelled your RSVP.</p>
                     )}
                   </div>
+                  </div>
                 </section>
 
                 <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
