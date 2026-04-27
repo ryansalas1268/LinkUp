@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle, ChevronRight } from "lucide-react";
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
 import { SuggestionsBox } from "@/components/SuggestionsBox";
@@ -911,75 +911,75 @@ function EventsPage() {
                     {expenses.map((exp) => {
                       const expShares = shares.filter((s) => s.expense_id === exp.id);
                       const payer = profiles[exp.paid_by];
+                      const allocated = expShares.reduce((sum, s) => sum + Number(s.share_amount), 0);
+                      const remaining = Number(exp.amount) - allocated;
+                      const isBalanced = expShares.length > 0 && Math.abs(remaining) < 0.01;
+                      const isOver = remaining < -0.005;
+                      const statusLabel = expShares.length === 0
+                        ? "No splits"
+                        : isBalanced
+                          ? "✓ Fully split"
+                          : isOver
+                            ? `Over $${Math.abs(remaining).toFixed(2)}`
+                            : `$${remaining.toFixed(2)} left`;
+                      const statusClass = expShares.length === 0
+                        ? "text-muted-foreground"
+                        : isBalanced
+                          ? "text-brand-yellow font-bold"
+                          : isOver
+                            ? "text-destructive font-bold"
+                            : "text-brand-pink font-bold";
                       return (
-                        <div key={exp.id} className="bg-input p-3 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="flex-1">
-                              <div className="font-bold">{exp.title} <span className="text-brand-yellow">${Number(exp.amount).toFixed(2)}</span></div>
-                              <div className="text-xs text-muted-foreground">
+                        <details key={exp.id} className="bg-input rounded-lg group">
+                          <summary className="flex items-center gap-2 p-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                            <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold truncate">{exp.title} <span className="text-brand-yellow">${Number(exp.amount).toFixed(2)}</span></div>
+                              <div className="text-xs text-muted-foreground truncate">
                                 Paid by <span className="text-brand-pink">@{payer?.username ?? "user"}</span>
                                 {exp.notes && <> • {exp.notes}</>}
                               </div>
                             </div>
+                            <span className={`text-xs whitespace-nowrap ${statusClass}`}>{statusLabel}</span>
                             {exp.paid_by === user?.id && (
-                              <button onClick={() => deleteExpense(exp.id)} className="text-muted-foreground hover:text-destructive">
+                              <button
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteExpense(exp.id); }}
+                                className="text-muted-foreground hover:text-destructive"
+                              >
                                 <X className="w-4 h-4" />
                               </button>
                             )}
-                          </div>
-                          {expShares.length > 0 && (() => {
-                            const allocated = expShares.reduce((sum, s) => sum + Number(s.share_amount), 0);
-                            const remaining = Number(exp.amount) - allocated;
-                            const isBalanced = Math.abs(remaining) < 0.01;
-                            const isOver = remaining < -0.005;
-                            return (
-                              <div className="pt-2 border-t border-border">
-                                <div className="grid grid-cols-2 gap-2">
-                                  {expShares.map((s) => {
-                                    const u = profiles[s.user_id];
-                                    return (
-                                      <div key={s.id} className="flex items-center gap-1 text-xs">
-                                        <span className="text-muted-foreground truncate">@{u?.username ?? "user"}</span>
-                                        <span className="text-muted-foreground">$</span>
-                                        <input
-                                          type="number"
-                                          step="0.01"
-                                          min="0"
-                                          defaultValue={Number(s.share_amount).toFixed(2)}
-                                          onBlur={(e) => {
-                                            const val = parseFloat(e.target.value);
-                                            if (val !== Number(s.share_amount)) updateShare(s.id, val);
-                                          }}
-                                          className="w-16 bg-card px-1 py-0.5 rounded border border-border text-brand-yellow font-bold focus:outline-none focus:border-brand-yellow"
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                <div className="flex items-center justify-between mt-2 text-xs">
-                                  <span className="text-muted-foreground">
-                                    Allocated <span className="text-foreground font-bold">${allocated.toFixed(2)}</span> of ${Number(exp.amount).toFixed(2)}
-                                  </span>
-                                  <span
-                                    className={
-                                      isBalanced
-                                        ? "text-brand-yellow font-bold"
-                                        : isOver
-                                          ? "text-destructive font-bold"
-                                          : "text-brand-pink font-bold"
-                                    }
-                                  >
-                                    {isBalanced
-                                      ? "✓ Fully split"
-                                      : isOver
-                                        ? `Over by $${Math.abs(remaining).toFixed(2)}`
-                                        : `$${remaining.toFixed(2)} remaining`}
-                                  </span>
-                                </div>
+                          </summary>
+                          {expShares.length > 0 && (
+                            <div className="px-3 pb-3 pt-2 border-t border-border">
+                              <div className="grid grid-cols-2 gap-2">
+                                {expShares.map((s) => {
+                                  const u = profiles[s.user_id];
+                                  return (
+                                    <div key={s.id} className="flex items-center gap-1 text-xs">
+                                      <span className="text-muted-foreground truncate">@{u?.username ?? "user"}</span>
+                                      <span className="text-muted-foreground">$</span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        defaultValue={Number(s.share_amount).toFixed(2)}
+                                        onBlur={(e) => {
+                                          const val = parseFloat(e.target.value);
+                                          if (val !== Number(s.share_amount)) updateShare(s.id, val);
+                                        }}
+                                        className="w-16 bg-card px-1 py-0.5 rounded border border-border text-brand-yellow font-bold focus:outline-none focus:border-brand-yellow"
+                                      />
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            );
-                          })()}
-                        </div>
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                Allocated <span className="text-foreground font-bold">${allocated.toFixed(2)}</span> of ${Number(exp.amount).toFixed(2)}
+                              </div>
+                            </div>
+                          )}
+                        </details>
                       );
                     })}
                   </div>
