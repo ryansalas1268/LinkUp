@@ -714,7 +714,7 @@ function EventsPage() {
                 </button>
                 <section className="sm:bg-card sm:border sm:border-border rounded-xl overflow-hidden sm:p-0 -mt-4 sm:mt-0">
                   {(() => {
-                    const cover = coverFor(activeEvent.title);
+                    const cover = coverFor(activeEvent.title, activeEvent.cover_image_url);
                     return cover ? (
                       <img
                         src={cover}
