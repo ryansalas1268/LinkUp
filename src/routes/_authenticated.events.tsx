@@ -658,7 +658,21 @@ function EventsPage() {
                 >
                   ← Back to events
                 </button>
-                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6 -mt-4 sm:mt-0">
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl overflow-hidden sm:p-0 -mt-4 sm:mt-0">
+                  {(() => {
+                    const cover = coverFor(activeEvent.title);
+                    return cover ? (
+                      <img
+                        src={cover}
+                        alt={`${activeEvent.title} cover`}
+                        loading="lazy"
+                        width={1280}
+                        height={704}
+                        className="w-full h-40 sm:h-56 object-cover"
+                      />
+                    ) : null;
+                  })()}
+                  <div className="p-0 sm:p-6">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
