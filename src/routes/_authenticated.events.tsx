@@ -1067,12 +1067,12 @@ function EventsPage() {
                     })}
                   </div>
 
-                  <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
+                  <div className="flex flex-nowrap gap-2 pt-4 border-t border-border">
                     <input
                       type="datetime-local"
                       value={newProposal}
                       onChange={(e) => setNewProposal(e.target.value)}
-                      className="flex-1 min-w-0 basis-40 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                      className="flex-1 min-w-0 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
                     />
                     <button onClick={addProposal} className="shrink-0 bg-brand-gradient text-black font-bold px-4 py-2 rounded-lg text-sm">Propose</button>
                   </div>
