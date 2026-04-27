@@ -31,7 +31,6 @@ export function Navbar() {
             <Link to="/messages" search={{ conversation: undefined }} className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Messages</Link>
             <Link to="/lifecycle" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Lifecycle</Link>
             <Link to="/wrapped" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Wrapped</Link>
-            <Link to="/rules" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Rules</Link>
             <span className="hidden md:inline text-sm text-brand-yellow font-bold">@{profile?.username ?? "..."}</span>
             <Button
               onClick={handleLogout}
