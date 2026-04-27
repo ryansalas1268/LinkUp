@@ -2,9 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { Sparkles, Calendar, DollarSign, MapPin, Trophy, X, Users, Clock } from "lucide-react";
-import { toast } from "sonner";
+import { Sparkles, Calendar, DollarSign, MapPin, Trophy, X, Users, Clock, Globe2, Landmark } from "lucide-react";
 import { DC_PICKS, GLOBAL_PICKS, type Pick as TopPick } from "@/lib/topPicks";
+import { SuggestionsBox } from "@/components/SuggestionsBox";
 import coverRooftop from "@/assets/event-rooftop.jpg";
 import coverVolleyball from "@/assets/event-volleyball.jpg";
 import coverPotluck from "@/assets/event-potluck.jpg";
@@ -413,8 +413,69 @@ function WrappedPage() {
         </section>
       </div>
 
-      {/* Top Picks — subtle inspiration nudge */}
+      {/* Local & Global breakdown + curated recommendations */}
+      {(() => {
+        const isLocal = (loc: string | null) =>
+          !!loc && /\b(d\.?c\.?|washington|dmv|arlington|alexandria|bethesda|silver spring|georgetown|foggy bottom|capitol hill|navy yard|nova|virginia|maryland)\b/i.test(loc);
+        const localCount = events.filter((e) => isLocal(e.location)).length;
+        const awayCount = events.filter((e) => e.location && !isLocal(e.location)).length;
+        const total = Math.max(1, localCount + awayCount);
+        const localPct = Math.round((localCount / total) * 100);
+        const awayPct = 100 - localPct;
+        // Recommend the side they've explored less.
+        const leanLocal = awayCount >= localCount;
+        const localRecs = DC_PICKS.slice(0, 3);
+        const globalRecs = GLOBAL_PICKS.slice(0, 3);
+        return (
+          <section className="bg-card border border-border rounded-2xl p-6 mb-8">
+            <div className="flex items-baseline justify-between mb-1">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-brand-pink" /> Local vs Global
+              </h2>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Your year on the map</span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              {localCount + awayCount === 0
+                ? "No locations logged yet — add some on your next event!"
+                : leanLocal
+                  ? "You stayed local most of the year. Maybe a trip is in order?"
+                  : "You traveled a lot this year! Don't forget the gems back home."}
+            </p>
+
+            {(localCount + awayCount) > 0 && (
+              <div className="mb-5">
+                <div className="flex h-3 rounded-full overflow-hidden bg-input">
+                  <div className="bg-brand-yellow" style={{ width: `${localPct}%` }} />
+                  <div className="bg-brand-pink" style={{ width: `${awayPct}%` }} />
+                </div>
+                <div className="flex justify-between text-xs mt-2">
+                  <span className="font-bold text-brand-yellow">🏛️ DC / Local · {localCount} ({localPct}%)</span>
+                  <span className="font-bold text-brand-pink">🌍 Global · {awayCount} ({awayPct}%)</span>
+                </div>
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <RecCard
+                icon={<Landmark className="w-4 h-4" />}
+                heading="Top spots in D.C."
+                badge={leanLocal ? undefined : "Recommended for you"}
+                picks={localRecs}
+              />
+              <RecCard
+                icon={<Globe2 className="w-4 h-4" />}
+                heading="Bucket list, worldwide"
+                badge={leanLocal ? "Recommended for you" : undefined}
+                picks={globalRecs}
+              />
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Subtle additional inspiration */}
       <SuggestionsBox />
+
 
       {/* Event history */}
 
@@ -520,89 +581,45 @@ function Standout({
   );
 }
 
-function PicksGroup({ title, flag, picks }: { title: string; flag: string; picks: TopPick[] }) {
-  const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? picks : picks.slice(0, 6);
-  const copyPick = async (p: TopPick) => {
-    const label = `${p.name} — ${p.area}`;
-    try {
-      await navigator.clipboard.writeText(label);
-      toast.success(`Copied "${p.name}"`);
-    } catch {
-      toast.error("Couldn't copy");
-    }
-  };
+function RecCard({
+  icon,
+  heading,
+  badge,
+  picks,
+}: {
+  icon: React.ReactNode;
+  heading: string;
+  badge?: string;
+  picks: TopPick[];
+}) {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
-          <span className="mr-1">{flag}</span>{title}
-        </p>
-        {picks.length > 6 && (
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            className="text-[11px] text-brand-yellow font-bold hover:underline"
-          >
-            {expanded ? "Show less" : `Show all ${picks.length}`}
-          </button>
+    <div className="bg-input rounded-xl p-4 border border-border">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-brand-yellow">
+          {icon}
+          <h3 className="font-bold text-sm">{heading}</h3>
+        </div>
+        {badge && (
+          <span className="text-[9px] uppercase tracking-wider font-black bg-brand-gradient text-black px-2 py-0.5 rounded-full">
+            {badge}
+          </span>
         )}
       </div>
       <ul className="space-y-2">
-        {visible.map((p) => (
-          <li key={p.name}>
-            <button
-              type="button"
-              onClick={() => copyPick(p)}
-              className="w-full text-left bg-input hover:border-brand-yellow border border-border rounded-lg px-3 py-2.5 transition-colors group"
-            >
-              <div className="flex items-start gap-2.5">
-                <span className="text-lg leading-none mt-0.5">{p.emoji}</span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <span className="font-bold text-sm group-hover:text-brand-yellow">{p.name}</span>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold shrink-0">{p.category}</span>
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">{p.area}</div>
-                  <div className="text-xs text-muted-foreground/80 mt-0.5">{p.blurb}</div>
-                </div>
+        {picks.map((p) => (
+          <li key={p.name} className="flex items-start gap-2.5">
+            <span className="text-base leading-none mt-0.5">{p.emoji}</span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-1.5 flex-wrap">
+                <span className="font-bold text-sm">{p.name}</span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{p.category}</span>
               </div>
-            </button>
+              <div className="text-[11px] text-muted-foreground">{p.area}</div>
+              <div className="text-xs text-muted-foreground/80">{p.blurb}</div>
+            </div>
           </li>
         ))}
       </ul>
     </div>
-  );
-}
-
-function SuggestionsBox() {
-  const [open, setOpen] = useState(false);
-  return (
-    <section className="mb-8">
-      <div className="rounded-2xl border border-dashed border-border bg-input/30 p-4">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between gap-3 text-left"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <Sparkles className="w-4 h-4 text-brand-yellow shrink-0" />
-            <span className="text-sm">
-              <span className="font-bold">Need ideas for next time?</span>{" "}
-              <span className="text-muted-foreground">A few hand-picked spots in DC and abroad.</span>
-            </span>
-          </div>
-          <span className="text-[11px] uppercase tracking-wider text-brand-yellow font-bold shrink-0">
-            {open ? "Hide" : "Show"}
-          </span>
-        </button>
-        {open && (
-          <div className="grid md:grid-cols-2 gap-5 mt-4 pt-4 border-t border-dashed border-border">
-            <PicksGroup title="Local — Washington, D.C." flag="🏛️" picks={DC_PICKS} />
-            <PicksGroup title="Global Bucket List" flag="🌍" picks={GLOBAL_PICKS} />
-          </div>
-        )}
-      </div>
-    </section>
   );
 }
