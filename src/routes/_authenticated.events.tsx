@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle, ChevronRight } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle, ChevronRight, Pencil } from "lucide-react";
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
 import { SuggestionsBox } from "@/components/SuggestionsBox";
@@ -338,6 +338,33 @@ function EventsPage() {
     const remaining = events.filter((e) => e.id !== id);
     setEvents(remaining);
     setActiveId(remaining[0]?.id ?? null);
+  };
+
+  const renameEvent = async () => {
+    if (!activeEvent || activeEvent.host_id !== user?.id) return;
+    const next = window.prompt("Rename event", activeEvent.title)?.trim();
+    if (!next || next === activeEvent.title) return;
+    if (isDemoEventId(activeEvent.id)) {
+      setEvents((prev) => prev.map((e) => (e.id === activeEvent.id ? { ...e, title: next } : e)));
+      toast.success("Renamed (demo)");
+      return;
+    }
+    const { error } = await supabase.from("events").update({ title: next }).eq("id", activeEvent.id);
+    if (error) { toast.error(error.message); return; }
+    setEvents((prev) => prev.map((e) => (e.id === activeEvent.id ? { ...e, title: next } : e)));
+    toast.success("Event renamed");
+  };
+
+  const deleteProposal = async (proposalId: string) => {
+    if (!activeEvent || activeEvent.host_id !== user?.id) {
+      toast.error("Only the host can remove proposed times");
+      return;
+    }
+    if (activeId && isDemoEventId(activeId)) { demoToast(); return; }
+    await supabase.from("time_votes").delete().eq("proposal_id", proposalId);
+    const { error } = await supabase.from("time_proposals").delete().eq("id", proposalId);
+    if (error) { toast.error(error.message); return; }
+    loadEventDetails(activeId!);
   };
 
   const setRSVP = async (status: "going" | "maybe" | "no") => {
@@ -826,6 +853,16 @@ function EventsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
+                        {activeEvent.host_id === user?.id && (
+                          <button
+                            onClick={renameEvent}
+                            className="text-muted-foreground hover:text-brand-yellow"
+                            title="Rename event"
+                            aria-label="Rename event"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
                         {activeLifecycle && (() => {
                           const meta = getLifecycleMeta(activeLifecycle);
                           return (
@@ -1307,6 +1344,16 @@ function EventsPage() {
                           </button>
                           <span className="flex-1 text-sm">{new Date(p.proposed_time).toLocaleString()}</span>
                           <span className="text-sm text-muted-foreground">{count} vote{count === 1 ? "" : "s"}</span>
+                          {activeEvent.host_id === user?.id && (
+                            <button
+                              onClick={() => deleteProposal(p.id)}
+                              className="text-muted-foreground hover:text-destructive shrink-0"
+                              title="Remove time"
+                              aria-label="Remove proposed time"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       );
                     })}
