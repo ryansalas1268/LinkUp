@@ -13,7 +13,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -23,11 +23,25 @@ function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    const id = identifier.trim();
+    if (!id || !password) {
       toast.error("Please fill in all fields");
       return;
     }
     setBusy(true);
+
+    // If they typed a username, resolve it to an email first
+    let email = id;
+    if (!id.includes("@")) {
+      const { data, error: lookupError } = await supabase.rpc("get_email_for_username", { _username: id });
+      if (lookupError || !data) {
+        setBusy(false);
+        toast.error("Wrong username or password. Please try again.");
+        return;
+      }
+      email = data as string;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
@@ -57,10 +71,11 @@ function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              autoComplete="username"
+              placeholder="Email or username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand-yellow"
               required
             />
