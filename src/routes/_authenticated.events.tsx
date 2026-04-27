@@ -138,6 +138,8 @@ function EventsPage() {
   const [friendIds, setFriendIds] = useState<string[]>([]);
   const [myRsvpsByEvent, setMyRsvpsByEvent] = useState<Record<string, RsvpRow>>({});
   const [sortMode, setSortMode] = useState<"soonest" | "recent">("soonest");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
 
   const activeEvent = events.find((e) => e.id === activeId);
 
