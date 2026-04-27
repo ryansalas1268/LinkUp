@@ -340,6 +340,33 @@ function EventsPage() {
     setActiveId(remaining[0]?.id ?? null);
   };
 
+  const renameEvent = async () => {
+    if (!activeEvent || activeEvent.host_id !== user?.id) return;
+    const next = window.prompt("Rename event", activeEvent.title)?.trim();
+    if (!next || next === activeEvent.title) return;
+    if (isDemoEventId(activeEvent.id)) {
+      setEvents((prev) => prev.map((e) => (e.id === activeEvent.id ? { ...e, title: next } : e)));
+      toast.success("Renamed (demo)");
+      return;
+    }
+    const { error } = await supabase.from("events").update({ title: next }).eq("id", activeEvent.id);
+    if (error) { toast.error(error.message); return; }
+    setEvents((prev) => prev.map((e) => (e.id === activeEvent.id ? { ...e, title: next } : e)));
+    toast.success("Event renamed");
+  };
+
+  const deleteProposal = async (proposalId: string) => {
+    if (!activeEvent || activeEvent.host_id !== user?.id) {
+      toast.error("Only the host can remove proposed times");
+      return;
+    }
+    if (activeId && isDemoEventId(activeId)) { demoToast(); return; }
+    await supabase.from("time_votes").delete().eq("proposal_id", proposalId);
+    const { error } = await supabase.from("time_proposals").delete().eq("id", proposalId);
+    if (error) { toast.error(error.message); return; }
+    loadEventDetails(activeId!);
+  };
+
   const setRSVP = async (status: "going" | "maybe" | "no") => {
     if (!activeId || !user) return;
     if (isDemoEventId(activeId)) {
