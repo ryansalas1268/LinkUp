@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { Navbar } from "@/components/Navbar";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
@@ -26,6 +27,7 @@ function AuthLayout() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PaymentTestModeBanner />
       <Navbar />
       <Outlet />
     </div>
