@@ -155,7 +155,7 @@ function EventsPage() {
     }
   };
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); }, [user?.id]);
   useEffect(() => { if (activeId) loadEventDetails(activeId); }, [activeId]);
 
   const createEvent = async () => {
