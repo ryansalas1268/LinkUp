@@ -116,6 +116,14 @@ function EventsPage() {
     if (user) {
       const { data: mine } = await supabase.from("rsvps").select("*").eq("user_id", user.id);
       if (mine) setMyRsvpsByEvent(Object.fromEntries(mine.map((r) => [r.event_id, r as RsvpRow])));
+
+      const { data: fs } = await supabase
+        .from("friendships")
+        .select("requester_id, addressee_id, status")
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+        .eq("status", "accepted");
+      const ids = (fs ?? []).map((f) => f.requester_id === user.id ? f.addressee_id : f.requester_id);
+      setFriendIds(ids);
     }
   };
 
