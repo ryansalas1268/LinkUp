@@ -165,7 +165,13 @@ function EventsPage() {
     const realEvents = evs ?? [];
     const merged = [...realEvents, ...DEMO_EVENTS];
     setEvents(merged);
-    if (merged.length && !activeId) setActiveId(merged[0].id);
+    if (merged.length && !activeId) {
+      const now = Date.now();
+      const soonest = merged
+        .filter((e) => e.scheduled_at && +new Date(e.scheduled_at) >= now)
+        .sort((a, b) => +new Date(a.scheduled_at as string) - +new Date(b.scheduled_at as string))[0];
+      setActiveId(soonest?.id ?? merged[0].id);
+    }
 
     const { data: profs } = await supabase.from("profiles").select("id, username, display_name");
     const profileMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p]));
