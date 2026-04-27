@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { validateEmail, validatePassword, validateUsername, BR } from "@/lib/businessRules";
 
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
@@ -30,14 +31,32 @@ function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (Object.values(form).some((v) => !v)) {
+    // BR005: All required fields completed
+    if (Object.values(form).some((v) => !v.trim())) {
       toast.error("Please fill in all fields");
       return;
     }
-    if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    // BR003: valid email
+    const emailCheck = validateEmail(form.email);
+    if (!emailCheck.ok) { toast.error(emailCheck.message); return; }
+    // BR001: username 3–30 chars + format
+    const userCheck = validateUsername(form.username);
+    if (!userCheck.ok) { toast.error(userCheck.message); return; }
+    // BR002: strong password
+    const pwCheck = validatePassword(form.password);
+    if (!pwCheck.ok) { toast.error(pwCheck.message); return; }
+
+    // BR001: username uniqueness pre-check (DB also enforces)
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", form.username.trim())
+      .maybeSingle();
+    if (existing) {
+      toast.error("That username is already taken");
       return;
     }
+
     setBusy(true);
     const { error } = await supabase.auth.signUp({
       email: form.email,
@@ -78,8 +97,11 @@ function SignupPage() {
               <input className={inputClass} placeholder="Last Name" value={form.last_name} onChange={update("last_name")} required />
             </div>
             <input className={inputClass} type="email" placeholder="Email Address" value={form.email} onChange={update("email")} required />
-            <input className={inputClass} placeholder="Choose Username" value={form.username} onChange={update("username")} required />
-            <input className={inputClass} type="password" placeholder="Create Password (min 6 chars)" value={form.password} onChange={update("password")} required />
+            <input className={inputClass} placeholder={`Choose Username (${BR.USERNAME_MIN}–${BR.USERNAME_MAX} chars)`} minLength={BR.USERNAME_MIN} maxLength={BR.USERNAME_MAX} value={form.username} onChange={update("username")} required />
+            <input className={inputClass} type="password" placeholder={`Password (≥${BR.PASSWORD_MIN}, letter+number+special)`} minLength={BR.PASSWORD_MIN} value={form.password} onChange={update("password")} required />
+            <p className="text-xs text-muted-foreground text-left -mt-1">
+              Must include a letter, a number, and a special character.
+            </p>
 
             <button
               type="submit"
