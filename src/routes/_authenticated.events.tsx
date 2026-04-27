@@ -1074,7 +1074,8 @@ function EventsPage() {
                       );
                     })}
                   </ul>
-                </section>
+                  </div>
+                </details>
               </div>
             </div>
           )}
