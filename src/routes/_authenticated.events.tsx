@@ -1009,7 +1009,7 @@ function EventsPage() {
                       placeholder="What needs to be done?"
                       value={newTask.name}
                       onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
-                      className="flex-1 min-w-0 basis-40 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                      className="flex-1 min-w-0 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
                     />
                     <select
                       value={newTask.priority}
