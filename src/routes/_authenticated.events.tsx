@@ -866,7 +866,8 @@ function EventsPage() {
                               if (e.key === "Enter") { e.preventDefault(); renameEvent(titleDraft); }
                               if (e.key === "Escape") { setEditingTitle(false); }
                             }}
-                            className="text-xl sm:text-2xl font-bold bg-input border border-border rounded-md px-2 py-1 outline-none focus:border-brand-yellow"
+                            className="text-xl sm:text-2xl font-bold bg-input border border-border rounded-md px-2 py-1 outline-none focus:border-brand-yellow w-auto max-w-full"
+                            size={Math.max(titleDraft.length + 1, 8)}
                           />
                         ) : (
                           <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
