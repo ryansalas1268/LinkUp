@@ -1100,26 +1100,6 @@ function EventsPage() {
                     <p className="text-xs italic text-muted-foreground">No matches.</p>
                   )}
                 </section>
-
-                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
-                  <div className="flex items-baseline justify-between mb-1">
-                    <h2 className="text-xl font-bold">Top Picks 📍</h2>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Inspiration</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    {showNew
-                      ? "Tap a spot to fill it in as your event location."
-                      : activeEvent && user && activeEvent.host_id === user.id
-                        ? "Tap a spot to set it as this event's location."
-                        : "Tap a spot to copy it to your clipboard."}
-                  </p>
-
-                  <PicksGroup title="Local — Washington, D.C." flag="🏛️" picks={DC_PICKS} onPick={usePickAsLocation} />
-                  <div className="mt-4">
-                    <PicksGroup title="Global Bucket List" flag="🌍" picks={GLOBAL_PICKS} onPick={usePickAsLocation} />
-                  </div>
-                </section>
-
                 <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
                   <h2 className="text-xl font-bold mb-3">Group To-Do 📋</h2>
                   <div className="h-2 bg-input rounded-full overflow-hidden mb-1">
