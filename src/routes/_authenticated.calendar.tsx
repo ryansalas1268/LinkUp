@@ -112,7 +112,10 @@ function CalendarPage() {
 
           <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center mb-2">
             {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
-              <div key={d} className="font-bold text-brand-pink text-xs sm:text-sm">{d.slice(0, window.innerWidth < 400 ? 1 : 3)}</div>
+              <div key={d} className="font-bold text-brand-pink text-xs sm:text-sm">
+                <span className="hidden sm:inline">{d}</span>
+                <span className="sm:hidden">{d[0]}</span>
+              </div>
             ))}
           </div>
 
