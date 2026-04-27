@@ -223,19 +223,7 @@ function EventsPage() {
     // BR010: title required, max 50 chars
     const titleCheck = validateEventTitle(newEvent.title);
     if (!titleCheck.ok) { toast.error(titleCheck.message); return; }
-    // BR013: free-tier cap — 1 hosted event per calendar month
-    const monthStart = new Date();
-    monthStart.setDate(1);
-    monthStart.setHours(0, 0, 0, 0);
-    const { count } = await supabase
-      .from("events")
-      .select("id", { count: "exact", head: true })
-      .eq("host_id", user.id)
-      .gte("created_at", monthStart.toISOString());
-    if ((count ?? 0) >= BR.FREE_EVENTS_PER_MONTH) {
-      toast.error(`Free plan: ${BR.FREE_EVENTS_PER_MONTH} event/month. Upgrade to Premium for unlimited events.`);
-      return;
-    }
+    // Free-tier cap disabled for demo — premium gating bypassed
     const { data, error } = await supabase
       .from("events")
       .insert({
