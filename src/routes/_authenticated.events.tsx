@@ -143,23 +143,30 @@ function EventsPage() {
 
   const activeEvent = events.find((e) => e.id === activeId);
 
-  const sortedEvents = (() => {
+  const { upcomingEvents, pastEvents } = (() => {
     const now = Date.now();
-    if (sortMode === "recent") {
-      return [...events].sort((a, b) => +new Date(b.created_at ?? 0) - +new Date(a.created_at ?? 0));
-    }
-    // soonest: upcoming events ordered by closest date, then past events newest-first
     const withTime = events.map((e) => ({ e, t: e.scheduled_at ? +new Date(e.scheduled_at) : null }));
-    const upcoming = withTime
-      .filter((x) => x.t !== null && (x.t as number) >= now)
-      .sort((a, b) => (a.t as number) - (b.t as number));
-    const past = withTime
-      .filter((x) => x.t !== null && (x.t as number) < now)
-      .sort((a, b) => (b.t as number) - (a.t as number));
-    const undated = withTime
-      .filter((x) => x.t === null)
-      .sort((a, b) => +new Date(b.e.created_at ?? 0) - +new Date(a.e.created_at ?? 0));
-    return [...upcoming, ...past, ...undated].map((x) => x.e);
+    const upcomingArr = withTime.filter((x) => x.t !== null && (x.t as number) >= now);
+    const pastArr = withTime.filter((x) => x.t !== null && (x.t as number) < now);
+    const undated = withTime.filter((x) => x.t === null);
+
+    if (sortMode === "recent") {
+      // Order by created_at desc within each group
+      const byCreated = (a: typeof withTime[number], b: typeof withTime[number]) =>
+        +new Date(b.e.created_at ?? 0) - +new Date(a.e.created_at ?? 0);
+      return {
+        upcomingEvents: [...upcomingArr, ...undated].sort(byCreated).map((x) => x.e),
+        pastEvents: [...pastArr].sort(byCreated).map((x) => x.e),
+      };
+    }
+    // soonest: upcoming nearest-first, past most-recent-first
+    return {
+      upcomingEvents: [
+        ...upcomingArr.sort((a, b) => (a.t as number) - (b.t as number)),
+        ...undated.sort((a, b) => +new Date(b.e.created_at ?? 0) - +new Date(a.e.created_at ?? 0)),
+      ].map((x) => x.e),
+      pastEvents: pastArr.sort((a, b) => (b.t as number) - (a.t as number)).map((x) => x.e),
+    };
   })();
 
   const loadAll = async () => {
