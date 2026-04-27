@@ -99,7 +99,7 @@ function CalendarPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="grid lg:grid-cols-[2fr_1fr] gap-6 lg:gap-8 items-start">
-        <section className="bg-card border border-border rounded-xl p-3 sm:p-6">
+        <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
           <div className="flex justify-between items-center mb-4 sm:mb-6">
             <button onClick={() => changeMonth(-1)} className="bg-input border border-border text-brand-yellow px-3 sm:px-4 py-1.5 rounded-lg hover:bg-card font-bold">
               <ChevronLeft className="w-4 h-4" />
@@ -145,8 +145,8 @@ function CalendarPage() {
           </div>
         </section>
 
-        <div className="space-y-6">
-          <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
+        <div className="space-y-8 sm:space-y-6">
+          <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
             <h2 className="text-xl font-bold mb-4">Upcoming Events 📅</h2>
             <ul className="space-y-4 border-l-2 border-border pl-4 ml-2">
               {upcoming.length === 0 && <li className="text-sm text-muted-foreground italic">Nothing scheduled.</li>}
@@ -163,7 +163,7 @@ function CalendarPage() {
             </ul>
           </section>
 
-          <section className="bg-card border border-border rounded-xl p-6">
+          <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
             <h2 className="text-xl font-bold mb-1">My Tasks 📋</h2>
             <p className="text-sm text-muted-foreground mb-4">Grouped by event, sorted by urgency</p>
             {tasks.length === 0 ? (

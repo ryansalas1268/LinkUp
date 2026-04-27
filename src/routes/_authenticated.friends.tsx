@@ -99,8 +99,8 @@ function FriendsPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="grid lg:grid-cols-[2fr_1fr] gap-6">
-        <div className="space-y-6">
-          <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
+        <div className="space-y-8 sm:space-y-6">
+          <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
             <h2 className="text-xl font-bold mb-1">Find Friends 🔍</h2>
             <p className="text-sm text-muted-foreground mb-4">Search by username or name</p>
             <div className="relative">
@@ -136,7 +136,7 @@ function FriendsPage() {
             )}
           </section>
 
-          <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
+          <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
             <h2 className="text-xl font-bold mb-1">My Network 👥</h2>
             <p className="text-sm text-muted-foreground mb-4">{accepted.length} connected friend{accepted.length === 1 ? "" : "s"}</p>
             <ul className="divide-y divide-border">
@@ -160,8 +160,8 @@ function FriendsPage() {
           </section>
         </div>
 
-        <div className="space-y-6">
-          <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
+        <div className="space-y-8 sm:space-y-6">
+          <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
             <h2 className="text-xl font-bold mb-1">Friend Requests 🔔</h2>
             <p className="text-sm text-muted-foreground mb-4">{incoming.length} waiting</p>
             <ul className="space-y-2">
@@ -190,7 +190,7 @@ function FriendsPage() {
           </section>
 
           {outgoing.length > 0 && (
-            <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
+            <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
               <h2 className="text-xl font-bold mb-3">Pending Sent ✉️</h2>
               <ul className="space-y-2">
                 {outgoing.map((f) => {

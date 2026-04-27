@@ -567,14 +567,14 @@ function EventsPage() {
 
           {activeEvent && (
             <div className="grid xl:grid-cols-[2fr_1fr] gap-6">
-              <div className="space-y-6">
+              <div className="space-y-8 sm:space-y-6">
                 <button
                   onClick={() => setActiveId(null)}
                   className="lg:hidden flex items-center gap-1 text-sm font-bold text-brand-yellow hover:underline -mb-2"
                 >
                   ← Back to events
                 </button>
-                <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -671,7 +671,7 @@ function EventsPage() {
                   </div>
                 </section>
 
-                <section className="bg-card border border-border rounded-xl p-6">
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
                   <div className="flex items-center justify-between mb-1">
                     <h2 className="text-xl font-bold flex items-center gap-2">
                       <DollarSign className="w-5 h-5 text-brand-yellow" />
@@ -897,8 +897,8 @@ function EventsPage() {
               </div>
 
 
-              <div className="space-y-6">
-                <section className="bg-card border border-border rounded-xl p-6">
+              <div className="space-y-8 sm:space-y-6">
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
                   <h2 className="text-xl font-bold mb-3">Group To-Do 📋</h2>
                   <div className="h-2 bg-input rounded-full overflow-hidden mb-1">
                     <div className="h-full bg-brand-gradient transition-all" style={{ width: `${progress}%` }} />
@@ -936,7 +936,7 @@ function EventsPage() {
                   </ul>
                 </section>
 
-                <section className="bg-card border border-border rounded-xl p-6">
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
                   <h2 className="text-xl font-bold mb-1">Vote on a Time 🕒</h2>
                   <p className="text-sm text-muted-foreground mb-4">Select the time that works best for you!</p>
 
@@ -979,7 +979,7 @@ function EventsPage() {
                   </div>
                 </section>
 
-                <details className="bg-card border border-border rounded-xl p-6 group">
+                <details className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6 group">
                   <summary className="cursor-pointer list-none flex items-center justify-between">
                     <h2 className="text-xl font-bold">Guestlist 👥 <span className="text-sm font-normal text-muted-foreground">({rsvps.length})</span></h2>
                     <span className="text-brand-yellow group-open:rotate-45 transition-transform text-xl leading-none">+</span>
