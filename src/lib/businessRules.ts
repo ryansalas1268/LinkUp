@@ -13,7 +13,7 @@ const USERNAME_RE = /^[a-zA-Z0-9_]+$/;
 const PASSWORD_LETTER = /[A-Za-z]/;
 const PASSWORD_NUMBER = /[0-9]/;
 const PASSWORD_SPECIAL = /[^A-Za-z0-9]/;
-const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type Result = { ok: true } | { ok: false; message: string };
 
