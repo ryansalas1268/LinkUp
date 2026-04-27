@@ -856,10 +856,24 @@ function EventsPage() {
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
-                        {activeEvent.host_id === user?.id && (
+                        {editingTitle && activeEvent.host_id === user?.id ? (
+                          <input
+                            autoFocus
+                            value={titleDraft}
+                            onChange={(e) => setTitleDraft(e.target.value)}
+                            onBlur={() => renameEvent(titleDraft)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") { e.preventDefault(); renameEvent(titleDraft); }
+                              if (e.key === "Escape") { setEditingTitle(false); }
+                            }}
+                            className="text-xl sm:text-2xl font-bold bg-input border border-border rounded-md px-2 py-1 outline-none focus:border-brand-yellow"
+                          />
+                        ) : (
+                          <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
+                        )}
+                        {!editingTitle && activeEvent.host_id === user?.id && (
                           <button
-                            onClick={renameEvent}
+                            onClick={() => { setTitleDraft(activeEvent.title); setEditingTitle(true); }}
                             className="text-muted-foreground hover:text-brand-yellow"
                             title="Rename event"
                             aria-label="Rename event"
