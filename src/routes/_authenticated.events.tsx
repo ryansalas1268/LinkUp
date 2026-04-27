@@ -226,12 +226,13 @@ function EventsPage() {
         description: newEvent.description || null,
         location: newEvent.location || null,
         scheduled_at: newEvent.scheduled_at || null,
+        cover_image_url: newEvent.cover_image_url || null,
       })
       .select()
       .single();
     if (error) { toast.error(error.message); return; }
     toast.success("Event created!");
-    setNewEvent({ title: "", description: "", location: "", scheduled_at: "" });
+    setNewEvent({ title: "", description: "", location: "", scheduled_at: "", cover_image_url: "" });
     setShowNew(false);
     setEvents([data, ...events]);
     setActiveId(data.id);
