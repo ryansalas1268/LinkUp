@@ -3,13 +3,14 @@ import { Star, LogOut } from "lucide-react";
 import logo from "@/assets/linkup-logo-transparent.png";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { PremiumDialog } from "@/components/PremiumDialog";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const linkClass =
   "text-foreground font-semibold hover:text-brand-yellow transition-colors text-sm md:text-base";
 
 export function Navbar() {
   const { user, profile, signOut } = useAuth();
+  const { isActive } = useSubscription();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -47,11 +48,12 @@ export function Navbar() {
             <Link to="/signup" className={linkClass}>Sign up</Link>
           </>
         )}
-        <PremiumDialog>
-          <button className="bg-brand-gradient text-black font-bold px-4 py-2 rounded-full text-sm shadow-brand hover:scale-105 transition-transform flex items-center gap-1">
-            <Star className="w-4 h-4 fill-black" /> Upgrade Premium
-          </button>
-        </PremiumDialog>
+        <Link
+          to="/upgrade"
+          className="bg-brand-gradient text-black font-bold px-4 py-2 rounded-full text-sm shadow-brand hover:scale-105 transition-transform flex items-center gap-1"
+        >
+          <Star className="w-4 h-4 fill-black" /> {isActive ? "Premium ✓" : "Upgrade Premium"}
+        </Link>
       </div>
     </nav>
   );
