@@ -23,11 +23,52 @@ interface Friendship {
 }
 
 function FriendsPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
   const [friendships, setFriendships] = useState<Friendship[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [inviteContact, setInviteContact] = useState("");
+
+  const inviteLink = typeof window !== "undefined" ? `${window.location.origin}/signup` : "/signup";
+  const inviteMessage = `Hey! Join me on LinkUp${profile?.username ? ` (@${profile.username})` : ""} to plan our next hangout 🎉 ${inviteLink}`;
+
+  const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  const isPhone = (v: string) => /^[+\d][\d\s\-()]{6,}$/.test(v.trim());
+
+  const sendInvite = () => {
+    const v = inviteContact.trim();
+    if (!v) { toast.error("Enter an email or phone number"); return; }
+    if (isEmail(v)) {
+      window.location.href = `mailto:${v}?subject=${encodeURIComponent("Join me on LinkUp 🎉")}&body=${encodeURIComponent(inviteMessage)}`;
+      toast.success("Opening your email app…");
+    } else if (isPhone(v)) {
+      window.location.href = `sms:${v}?&body=${encodeURIComponent(inviteMessage)}`;
+      toast.success("Opening your messages app…");
+    } else {
+      toast.error("That doesn't look like a valid email or phone number");
+    }
+  };
+
+  const copyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteMessage);
+      toast.success("Invite copied — paste it anywhere!");
+    } catch {
+      toast.error("Couldn't copy — try selecting manually");
+    }
+  };
+
+  const shareInvite = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Join me on LinkUp", text: inviteMessage, url: inviteLink });
+      } catch { /* user cancelled */ }
+    } else {
+      copyInviteLink();
+    }
+  };
+
 
   const loadData = async () => {
     if (!user) return;
