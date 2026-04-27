@@ -261,9 +261,9 @@ function MessagesPage() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
-        <aside className="bg-card border border-border rounded-xl p-5 min-h-[600px]">
+        <aside className={`bg-card border border-border rounded-xl p-4 sm:p-5 lg:min-h-[600px] ${activeId ? "hidden lg:block" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Messages</h2>
             <button onClick={() => setShowNew(!showNew)} className="bg-brand-gradient text-black p-1.5 rounded-lg">
@@ -301,7 +301,7 @@ function MessagesPage() {
           </div>
         </aside>
 
-        <section className="bg-card border border-border rounded-xl p-5 min-h-[600px] flex flex-col">
+        <section className={`bg-card border border-border rounded-xl p-4 sm:p-5 min-h-[500px] lg:min-h-[600px] flex flex-col ${!activeId ? "hidden lg:flex" : ""}`}>
           {!active ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               Select or start a conversation.
@@ -309,9 +309,18 @@ function MessagesPage() {
           ) : (
             <>
               <div className="border-b border-border pb-3 mb-4 flex items-start justify-between gap-2">
-                <div>
-                  <h2 className="text-xl font-bold">{active.title ?? "Chat"}</h2>
-                  <p className="text-xs text-muted-foreground">{active.is_direct ? "Direct message" : "Group chat"}</p>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <button
+                    onClick={() => setActiveId(null)}
+                    className="lg:hidden text-brand-yellow font-bold text-lg shrink-0"
+                    aria-label="Back to conversations"
+                  >
+                    ←
+                  </button>
+                  <div className="min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold truncate">{active.title ?? "Chat"}</h2>
+                    <p className="text-xs text-muted-foreground">{active.is_direct ? "Direct message" : "Group chat"}</p>
+                  </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

@@ -447,14 +447,14 @@ function EventsPage() {
   const priorityIcon = { high: "🔴", med: "🟡", low: "🟢" };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">My Events</h1>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">My Events</h1>
         <button
           onClick={() => setShowNew(!showNew)}
-          className="bg-brand-gradient text-black font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 hover:scale-105 transition-transform"
+          className="bg-brand-gradient text-black font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg flex items-center gap-2 hover:scale-105 transition-transform text-sm sm:text-base whitespace-nowrap"
         >
-          <Plus className="w-4 h-4" /> New Event
+          <Plus className="w-4 h-4" /> <span className="hidden xs:inline">New Event</span><span className="xs:hidden">New</span>
         </button>
       </div>
 
@@ -504,7 +504,7 @@ function EventsPage() {
         </div>
       ) : (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-          <aside className="space-y-4">
+          <aside className={`space-y-4 ${activeEvent ? "hidden lg:block" : ""}`}>
             <div className="space-y-2">
               <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
               {events.map((e) => {
@@ -568,7 +568,13 @@ function EventsPage() {
           {activeEvent && (
             <div className="grid xl:grid-cols-[2fr_1fr] gap-6">
               <div className="space-y-6">
-                <section className="bg-card border border-border rounded-xl p-6">
+                <button
+                  onClick={() => setActiveId(null)}
+                  className="lg:hidden flex items-center gap-1 text-sm font-bold text-brand-yellow hover:underline -mb-2"
+                >
+                  ← Back to events
+                </button>
+                <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">

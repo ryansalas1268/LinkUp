@@ -97,26 +97,29 @@ function CalendarPage() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8">
-      <div className="grid lg:grid-cols-[2fr_1fr] gap-8 items-start">
-        <section className="bg-card border border-border rounded-xl p-6">
-          <div className="flex justify-between items-center mb-6">
-            <button onClick={() => changeMonth(-1)} className="bg-input border border-border text-brand-yellow px-4 py-1.5 rounded-lg hover:bg-card font-bold">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="grid lg:grid-cols-[2fr_1fr] gap-6 lg:gap-8 items-start">
+        <section className="bg-card border border-border rounded-xl p-3 sm:p-6">
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <button onClick={() => changeMonth(-1)} className="bg-input border border-border text-brand-yellow px-3 sm:px-4 py-1.5 rounded-lg hover:bg-card font-bold">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <h2 className="text-xl font-bold">{monthNames[month]} {year}</h2>
-            <button onClick={() => changeMonth(1)} className="bg-input border border-border text-brand-yellow px-4 py-1.5 rounded-lg hover:bg-card font-bold">
+            <h2 className="text-lg sm:text-xl font-bold">{monthNames[month]} {year}</h2>
+            <button onClick={() => changeMonth(1)} className="bg-input border border-border text-brand-yellow px-3 sm:px-4 py-1.5 rounded-lg hover:bg-card font-bold">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-7 gap-2 text-center mb-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center mb-2">
             {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
-              <div key={d} className="font-bold text-brand-pink text-sm">{d}</div>
+              <div key={d} className="font-bold text-brand-pink text-xs sm:text-sm">
+                <span className="hidden sm:inline">{d}</span>
+                <span className="sm:hidden">{d[0]}</span>
+              </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {Array.from({ length: firstDay }).map((_, i) => (
               <div key={`e${i}`} />
             ))}
@@ -126,7 +129,7 @@ function CalendarPage() {
               return (
                 <div
                   key={d}
-                  className={`min-h-[80px] flex items-center justify-center font-bold text-xl rounded-lg cursor-pointer transition-colors relative ${
+                  className={`min-h-[44px] sm:min-h-[80px] flex items-center justify-center font-bold text-sm sm:text-xl rounded-lg cursor-pointer transition-colors relative ${
                     isToday ? "bg-brand-gradient text-black" :
                     hasEvent ? "bg-input border-2 border-brand-yellow hover:bg-card" :
                     "bg-input hover:bg-card"
@@ -134,7 +137,7 @@ function CalendarPage() {
                 >
                   {d}
                   {hasEvent && !isToday && (
-                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-brand-yellow" />
+                    <span className="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-brand-yellow" />
                   )}
                 </div>
               );
@@ -143,7 +146,7 @@ function CalendarPage() {
         </section>
 
         <div className="space-y-6">
-          <section className="bg-card border border-border rounded-xl p-6">
+          <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
             <h2 className="text-xl font-bold mb-4">Upcoming Events 📅</h2>
             <ul className="space-y-4 border-l-2 border-border pl-4 ml-2">
               {upcoming.length === 0 && <li className="text-sm text-muted-foreground italic">Nothing scheduled.</li>}
