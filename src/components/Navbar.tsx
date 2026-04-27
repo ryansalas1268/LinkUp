@@ -30,7 +30,6 @@ export function Navbar() {
             <Link to="/calendar" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>My Calendar</Link>
             <Link to="/friends" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Friends</Link>
             <Link to="/messages" search={{ conversation: undefined }} className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Messages</Link>
-            <Link to="/lifecycle" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Lifecycle</Link>
             <Link to="/wrapped" className={linkClass} activeProps={{ className: `${linkClass} text-brand-yellow` }}>Wrapped</Link>
             <span className="hidden md:inline text-sm text-brand-yellow font-bold">@{profile?.username ?? "..."}</span>
             <Button
