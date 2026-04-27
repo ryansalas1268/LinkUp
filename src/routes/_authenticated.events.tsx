@@ -137,7 +137,7 @@ function EventsPage() {
   const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
   const [friendIds, setFriendIds] = useState<string[]>([]);
   const [myRsvpsByEvent, setMyRsvpsByEvent] = useState<Record<string, RsvpRow>>({});
-  const [sortMode, setSortMode] = useState<"soonest" | "recent">("soonest");
+  const [listMode, setListMode] = useState<"upcoming" | "past">("upcoming");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
 
