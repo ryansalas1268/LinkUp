@@ -6,6 +6,35 @@ import { toast } from "sonner";
 import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle } from "lucide-react";
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
+import coverRooftop from "@/assets/event-rooftop.jpg";
+import coverVolleyball from "@/assets/event-volleyball.jpg";
+import coverPotluck from "@/assets/event-potluck.jpg";
+import coverPicnic from "@/assets/event-picnic.jpg";
+import coverBrunch from "@/assets/event-brunch.jpg";
+import coverJapan from "@/assets/event-japan.jpg";
+
+// Map event titles to cover images. Falls back to a keyword match for user-created events.
+const COVER_BY_TITLE: Record<string, string> = {
+  "Sunset Rooftop Dinner": coverRooftop,
+  "Beach Volleyball Saturday": coverVolleyball,
+  "Friendsgiving Potluck": coverPotluck,
+  "Cherry Blossom Picnic": coverPicnic,
+  "Spring Brunch": coverBrunch,
+  "Tokyo Trip 🇯🇵": coverJapan,
+};
+const KEYWORD_COVERS: { match: RegExp; img: string }[] = [
+  { match: /tokyo|japan|kyoto|osaka/i, img: coverJapan },
+  { match: /rooftop|dinner|sunset/i, img: coverRooftop },
+  { match: /volleyball|beach|sport/i, img: coverVolleyball },
+  { match: /potluck|thanksgiving|friendsgiving|turkey/i, img: coverPotluck },
+  { match: /picnic|blossom|park/i, img: coverPicnic },
+  { match: /brunch|breakfast|mimosa|pancake/i, img: coverBrunch },
+];
+function coverFor(title: string): string | null {
+  if (COVER_BY_TITLE[title]) return COVER_BY_TITLE[title];
+  for (const k of KEYWORD_COVERS) if (k.match.test(title)) return k.img;
+  return null;
+}
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
