@@ -272,7 +272,7 @@ function EventsPage() {
     const { error } = await supabase.from("events").update({ location: label }).eq("id", activeEvent.id);
     if (error) { toast.error(error.message); return; }
     toast.success(`Location set to ${pick.name}`);
-    loadEvents();
+    loadAll();
   };
 
   const setRSVP = async (status: "going" | "maybe" | "no") => {
