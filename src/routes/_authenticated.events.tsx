@@ -6,6 +6,35 @@ import { toast } from "sonner";
 import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle } from "lucide-react";
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
+import coverRooftop from "@/assets/event-rooftop.jpg";
+import coverVolleyball from "@/assets/event-volleyball.jpg";
+import coverPotluck from "@/assets/event-potluck.jpg";
+import coverPicnic from "@/assets/event-picnic.jpg";
+import coverBrunch from "@/assets/event-brunch.jpg";
+import coverJapan from "@/assets/event-japan.jpg";
+
+// Map event titles to cover images. Falls back to a keyword match for user-created events.
+const COVER_BY_TITLE: Record<string, string> = {
+  "Sunset Rooftop Dinner": coverRooftop,
+  "Beach Volleyball Saturday": coverVolleyball,
+  "Friendsgiving Potluck": coverPotluck,
+  "Cherry Blossom Picnic": coverPicnic,
+  "Spring Brunch": coverBrunch,
+  "Tokyo Trip 🇯🇵": coverJapan,
+};
+const KEYWORD_COVERS: { match: RegExp; img: string }[] = [
+  { match: /tokyo|japan|kyoto|osaka/i, img: coverJapan },
+  { match: /rooftop|dinner|sunset/i, img: coverRooftop },
+  { match: /volleyball|beach|sport/i, img: coverVolleyball },
+  { match: /potluck|thanksgiving|friendsgiving|turkey/i, img: coverPotluck },
+  { match: /picnic|blossom|park/i, img: coverPicnic },
+  { match: /brunch|breakfast|mimosa|pancake/i, img: coverBrunch },
+];
+function coverFor(title: string): string | null {
+  if (COVER_BY_TITLE[title]) return COVER_BY_TITLE[title];
+  for (const k of KEYWORD_COVERS) if (k.match.test(title)) return k.img;
+  return null;
+}
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
@@ -519,26 +548,39 @@ function EventsPage() {
               {events.map((e) => {
                 const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
                 const meta = getLifecycleMeta(lc);
+                const cover = coverFor(e.title);
                 return (
                   <button
                     key={e.id}
                     onClick={() => setActiveId(e.id)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                    className={`w-full text-left rounded-lg border transition-colors overflow-hidden ${
                       activeId === e.id
                         ? "bg-card border-brand-pink"
                         : "bg-card border-border hover:border-brand-yellow"
                     }`}
                   >
-                    <div className="font-bold truncate">{e.title}</div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      {e.scheduled_at && (
-                        <span className="text-xs text-brand-yellow">
-                          {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    {cover && (
+                      <img
+                        src={cover}
+                        alt={`${e.title} cover`}
+                        loading="lazy"
+                        width={1024}
+                        height={1024}
+                        className="w-full h-20 object-cover"
+                      />
+                    )}
+                    <div className="p-3">
+                      <div className="font-bold truncate">{e.title}</div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {e.scheduled_at && (
+                          <span className="text-xs text-brand-yellow">
+                            {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
+                          {meta.emoji} {meta.label}
                         </span>
-                      )}
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
-                        {meta.emoji} {meta.label}
-                      </span>
+                      </div>
                     </div>
                   </button>
                 );
@@ -616,7 +658,21 @@ function EventsPage() {
                 >
                   ← Back to events
                 </button>
-                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6 -mt-4 sm:mt-0">
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl overflow-hidden sm:p-0 -mt-4 sm:mt-0">
+                  {(() => {
+                    const cover = coverFor(activeEvent.title);
+                    return cover ? (
+                      <img
+                        src={cover}
+                        alt={`${activeEvent.title} cover`}
+                        loading="lazy"
+                        width={1280}
+                        height={704}
+                        className="w-full h-40 sm:h-56 object-cover"
+                      />
+                    ) : null;
+                  })()}
+                  <div className="p-0 sm:p-6">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -710,6 +766,7 @@ function EventsPage() {
                     {activeLifecycle === "cancelled" && (
                       <p className="mt-3 text-sm text-no font-bold">🚫 You cancelled your RSVP.</p>
                     )}
+                  </div>
                   </div>
                 </section>
 
