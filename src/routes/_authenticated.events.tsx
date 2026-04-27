@@ -100,6 +100,7 @@ function EventsPage() {
   });
   const [inviteQuery, setInviteQuery] = useState("");
   const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
+  const [friendIds, setFriendIds] = useState<string[]>([]);
   const [myRsvpsByEvent, setMyRsvpsByEvent] = useState<Record<string, RsvpRow>>({});
 
   const activeEvent = events.find((e) => e.id === activeId);
