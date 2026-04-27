@@ -983,7 +983,6 @@ function EventsPage() {
                     <p className="text-xs text-muted-foreground italic mb-3">As the host you can change anyone's RSVP.</p>
                   )}
                   <ul className="space-y-2">
-
                 <section className="bg-card border border-border rounded-xl p-6">
                   <h2 className="text-xl font-bold mb-3">Guestlist 👥</h2>
                   {activeEvent.host_id === user?.id && (
