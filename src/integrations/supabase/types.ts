@@ -507,6 +507,7 @@ export type Database = {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
+      reset_demo_for_user: { Args: { me_id: string }; Returns: undefined }
       seed_demo_for_user: { Args: { me_id: string }; Returns: undefined }
     }
     Enums: {
