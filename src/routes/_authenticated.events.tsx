@@ -51,6 +51,7 @@ interface EventRow {
   ended_at: string | null;
   host_id: string;
   cover_image_url?: string | null;
+  created_at?: string | null;
 }
 
 interface RsvpRow {
@@ -142,7 +143,7 @@ function EventsPage() {
   const sortedEvents = (() => {
     const now = Date.now();
     if (sortMode === "recent") {
-      return [...events].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+      return [...events].sort((a, b) => +new Date(b.created_at ?? 0) - +new Date(a.created_at ?? 0));
     }
     // soonest: upcoming events ordered by closest date, then past events newest-first
     const withTime = events.map((e) => ({ e, t: e.scheduled_at ? +new Date(e.scheduled_at) : null }));
@@ -154,7 +155,7 @@ function EventsPage() {
       .sort((a, b) => (b.t as number) - (a.t as number));
     const undated = withTime
       .filter((x) => x.t === null)
-      .sort((a, b) => +new Date(b.e.created_at) - +new Date(a.e.created_at));
+      .sort((a, b) => +new Date(b.e.created_at ?? 0) - +new Date(a.e.created_at ?? 0));
     return [...upcoming, ...past, ...undated].map((x) => x.e);
   })();
 
