@@ -354,10 +354,20 @@ function EventsPage() {
 
   const vote = async (proposalId: string) => {
     if (!user) return;
-    const existing = votes.find((v) => v.proposal_id === proposalId && v.user_id === user.id);
-    if (existing) {
-      await supabase.from("time_votes").delete().eq("proposal_id", proposalId).eq("user_id", user.id);
-    } else {
+    // Single-selection: a user can vote for only one proposal per event.
+    const myProposalIds = proposals.map((p) => p.id);
+    const myVotes = votes.filter((v) => v.user_id === user.id && myProposalIds.includes(v.proposal_id));
+    const alreadyOnThis = myVotes.some((v) => v.proposal_id === proposalId);
+    // Clear any existing vote(s) by this user on this event's proposals
+    if (myVotes.length > 0) {
+      await supabase
+        .from("time_votes")
+        .delete()
+        .eq("user_id", user.id)
+        .in("proposal_id", myProposalIds);
+    }
+    // Toggle: if they clicked the one they already had, leave it cleared; otherwise set the new one.
+    if (!alreadyOnThis) {
       await supabase.from("time_votes").insert({ proposal_id: proposalId, user_id: user.id });
     }
     loadEventDetails(activeId!);
