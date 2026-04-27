@@ -255,30 +255,6 @@ function EventsPage() {
     setActiveId(remaining[0]?.id ?? null);
   };
 
-  const usePickAsLocation = async (pick: TopPick) => {
-    const label = `${pick.name} — ${pick.area}`;
-    // If the create-event modal is open, prefill there. Otherwise update the active event (host only).
-    if (showNew) {
-      setNewEvent({ ...newEvent, location: label });
-      toast.success(`Set new event location to ${pick.name}`);
-      return;
-    }
-    if (!activeEvent || !user || activeEvent.host_id !== user.id) {
-      // Fallback: copy to clipboard for non-hosts.
-      try {
-        await navigator.clipboard.writeText(label);
-        toast.success(`Copied "${pick.name}" to clipboard`);
-      } catch {
-        toast.error("Couldn't copy");
-      }
-      return;
-    }
-    const { error } = await supabase.from("events").update({ location: label }).eq("id", activeEvent.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`Location set to ${pick.name}`);
-    loadAll();
-  };
-
   const setRSVP = async (status: "going" | "maybe" | "no") => {
     if (!activeId || !user) return;
     const { error } = await supabase
