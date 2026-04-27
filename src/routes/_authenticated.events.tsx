@@ -362,7 +362,20 @@ function EventsPage() {
     loadEventDetails(activeId!);
   };
 
-  const myRsvp = rsvps.find((r) => r.user_id === user?.id)?.status;
+  const myRsvpRow = rsvps.find((r) => r.user_id === user?.id);
+  const myRsvp = myRsvpRow?.status;
+
+  // Compute lifecycle state for any event for the current user
+  const lifecycleFor = (ev: EventRow, rsvp?: { status: string; checked_in_at: string | null; cancelled_at: string | null } | null): LifecycleState => {
+    return getLifecycleState({
+      scheduledAt: ev.scheduled_at,
+      endedAt: ev.ended_at,
+      rsvpStatus: (rsvp?.status as "going" | "maybe" | "no" | "invited" | undefined) ?? null,
+      checkedInAt: rsvp?.checked_in_at ?? null,
+      cancelledAt: rsvp?.cancelled_at ?? null,
+    });
+  };
+  const activeLifecycle: LifecycleState | null = activeEvent ? lifecycleFor(activeEvent, myRsvpRow) : null;
   const completedCount = tasks.filter((t) => t.completed).length;
   const progress = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
 
