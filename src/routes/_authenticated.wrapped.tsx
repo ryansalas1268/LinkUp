@@ -225,15 +225,74 @@ function WrappedPage() {
       .slice(0, 8);
   }, [rsvps, profiles, user]);
 
-  const sortedHistory = useMemo(
-    () =>
-      [...events].sort((a, b) => {
-        const ta = new Date(a.scheduled_at ?? a.created_at).getTime();
-        const tb = new Date(b.scheduled_at ?? b.created_at).getTime();
-        return tb - ta;
-      }),
-    [events]
-  );
+  // Demo guest events to mix in alongside hosted ones (presentation only)
+  const guestDemoHistory = useMemo(() => [
+    {
+      id: "demo-karaoke",
+      title: "Karaoke Night 🎤",
+      location: "Muzette — H Street",
+      scheduled_at: `${year}-02-14T21:00:00Z`,
+      hostUsername: "lydialiu",
+      perspective: "Attended" as const,
+    },
+    {
+      id: "demo-soccer",
+      title: "Pickup Soccer ⚽",
+      location: "Meridian Hill Park",
+      scheduled_at: `${year}-03-08T15:00:00Z`,
+      hostUsername: "alexkim",
+      perspective: "Going" as const,
+    },
+    {
+      id: "demo-birthday",
+      title: "Maya's Birthday 🎂",
+      location: "Le Diplomate — 14th St",
+      scheduled_at: `${year}-04-04T23:00:00Z`,
+      hostUsername: "mayapatel",
+      perspective: "Maybe" as const,
+    },
+  ], [year]);
+
+  type HistoryItem = {
+    id: string;
+    title: string;
+    location: string | null;
+    scheduled_at: string | null;
+    hostUsername: string;
+    perspective: "Hosted" | "Going" | "Maybe" | "Attended" | "Invited" | "Cancelled";
+    isDemo?: boolean;
+  };
+
+  const sortedHistory = useMemo<HistoryItem[]>(() => {
+    const real: HistoryItem[] = events.map((e) => {
+      const myRsvp = rsvps.find((r) => r.event_id === e.id && r.user_id === user?.id);
+      const perspective: HistoryItem["perspective"] = myRsvp?.checked_in_at
+        ? "Attended"
+        : myRsvp?.cancelled_at
+        ? "Cancelled"
+        : myRsvp?.status === "going"
+        ? "Going"
+        : myRsvp?.status === "maybe"
+        ? "Maybe"
+        : e.host_id === user?.id
+        ? "Hosted"
+        : "Invited";
+      return {
+        id: e.id,
+        title: e.title,
+        location: e.location,
+        scheduled_at: e.scheduled_at ?? e.created_at,
+        hostUsername: profiles[e.host_id]?.username ?? "user",
+        perspective,
+      };
+    });
+    const demo: HistoryItem[] = guestDemoHistory.map((d) => ({ ...d, location: d.location, isDemo: true }));
+    return [...real, ...demo].sort((a, b) => {
+      const ta = a.scheduled_at ? new Date(a.scheduled_at).getTime() : 0;
+      const tb = b.scheduled_at ? new Date(b.scheduled_at).getTime() : 0;
+      return tb - ta;
+    });
+  }, [events, rsvps, profiles, user, guestDemoHistory]);
 
   const highlightEvents = sortedHistory.slice(0, 5);
 
@@ -487,18 +546,14 @@ function WrappedPage() {
         ) : (
           <ul className="divide-y divide-border">
             {sortedHistory.map((e) => {
-              const myRsvp = rsvps.find((r) => r.event_id === e.id && r.user_id === user?.id);
-              const wentBadge = myRsvp?.checked_in_at
-                ? { label: "Attended", cls: "bg-going/20 text-going border-going/40" }
-                : myRsvp?.cancelled_at
-                ? { label: "Cancelled", cls: "bg-no/20 text-no border-no/40" }
-                : myRsvp?.status === "going"
-                ? { label: "Going", cls: "bg-going/20 text-going border-going/40" }
-                : myRsvp?.status === "maybe"
-                ? { label: "Maybe", cls: "bg-maybe/20 text-maybe border-maybe/40" }
-                : e.host_id === user?.id
-                ? { label: "Hosted", cls: "bg-brand-yellow/20 text-brand-yellow border-brand-yellow/40" }
-                : { label: "Invited", cls: "bg-muted/30 text-muted-foreground border-border" };
+              const badgeMap: Record<HistoryItem["perspective"], string> = {
+                Attended: "bg-going/20 text-going border-going/40",
+                Going: "bg-going/20 text-going border-going/40",
+                Maybe: "bg-maybe/20 text-maybe border-maybe/40",
+                Hosted: "bg-brand-yellow/20 text-brand-yellow border-brand-yellow/40",
+                Invited: "bg-muted/30 text-muted-foreground border-border",
+                Cancelled: "bg-no/20 text-no border-no/40",
+              };
               return (
                 <li key={e.id}>
                   <Link
@@ -514,15 +569,20 @@ function WrappedPage() {
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold truncate">{e.title}</p>
+                      <p className="font-bold truncate flex items-center gap-1.5">
+                        {e.title}
+                        {e.isDemo && (
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground border border-border rounded px-1 py-0.5">demo</span>
+                        )}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {e.location ? `📍 ${e.location}` : "No location"}
                         {" • "}
-                        Hosted by @{profiles[e.host_id]?.username ?? "user"}
+                        Hosted by @{e.hostUsername}
                       </p>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${wentBadge.cls}`}>
-                      {wentBadge.label}
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${badgeMap[e.perspective]}`}>
+                      {e.perspective}
                     </span>
                   </Link>
                 </li>
