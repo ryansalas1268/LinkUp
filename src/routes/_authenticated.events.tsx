@@ -506,6 +506,20 @@ function EventsPage() {
     loadEventDetails(activeId!);
   };
 
+  const deleteTask = async (t: TaskRow) => {
+    if (activeEvent && activeEvent.host_id !== user?.id) {
+      toast.error("Only the host can remove tasks");
+      return;
+    }
+    if (activeId && isDemoEventId(activeId)) {
+      setTasks((prev) => prev.filter((x) => x.id !== t.id));
+      return;
+    }
+    const { error } = await supabase.from("tasks").delete().eq("id", t.id);
+    if (error) { toast.error(error.message); return; }
+    loadEventDetails(activeId!);
+  };
+
   const addExpense = async () => {
     if (activeId && isDemoEventId(activeId)) { demoToast(); return; }
     if (!newExpense.title || !newExpense.amount || !activeId || !user) {
@@ -1252,6 +1266,15 @@ function EventsPage() {
                         <span className={t.completed ? "line-through text-muted-foreground flex-1" : "flex-1"}>
                           {priorityIcon[t.priority]} {t.task_name}
                         </span>
+                        {activeEvent.host_id === user?.id && (
+                          <button
+                            onClick={() => deleteTask(t)}
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                            aria-label="Remove task"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
