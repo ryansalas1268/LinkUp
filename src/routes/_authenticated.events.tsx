@@ -640,6 +640,7 @@ function EventsPage() {
               })}
             </div>
 
+            <SuggestionsBox className="" />
           </aside>
 
           {activeEvent && (
@@ -1018,7 +1019,6 @@ function EventsPage() {
 
 
               <div className="space-y-8 sm:space-y-6">
-                <SuggestionsBox className="" />
                 <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
                   <h2 className="text-xl font-bold mb-3">Invite People ➕</h2>
 
