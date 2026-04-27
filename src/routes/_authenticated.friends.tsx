@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Search, Check, X, UserPlus } from "lucide-react";
+import { Search, Check, X, UserPlus, Mail, MessageSquare, Copy, Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   component: FriendsPage,
