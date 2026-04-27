@@ -548,26 +548,39 @@ function EventsPage() {
               {events.map((e) => {
                 const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
                 const meta = getLifecycleMeta(lc);
+                const cover = coverFor(e.title);
                 return (
                   <button
                     key={e.id}
                     onClick={() => setActiveId(e.id)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                    className={`w-full text-left rounded-lg border transition-colors overflow-hidden ${
                       activeId === e.id
                         ? "bg-card border-brand-pink"
                         : "bg-card border-border hover:border-brand-yellow"
                     }`}
                   >
-                    <div className="font-bold truncate">{e.title}</div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      {e.scheduled_at && (
-                        <span className="text-xs text-brand-yellow">
-                          {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    {cover && (
+                      <img
+                        src={cover}
+                        alt={`${e.title} cover`}
+                        loading="lazy"
+                        width={1024}
+                        height={1024}
+                        className="w-full h-20 object-cover"
+                      />
+                    )}
+                    <div className="p-3">
+                      <div className="font-bold truncate">{e.title}</div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {e.scheduled_at && (
+                          <span className="text-xs text-brand-yellow">
+                            {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
+                          {meta.emoji} {meta.label}
                         </span>
-                      )}
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
-                        {meta.emoji} {meta.label}
-                      </span>
+                      </div>
                     </div>
                   </button>
                 );
