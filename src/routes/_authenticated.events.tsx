@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle, ChevronRight } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle, ChevronRight, Pencil } from "lucide-react";
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
 import { SuggestionsBox } from "@/components/SuggestionsBox";
