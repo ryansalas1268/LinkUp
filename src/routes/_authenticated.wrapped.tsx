@@ -546,18 +546,14 @@ function WrappedPage() {
         ) : (
           <ul className="divide-y divide-border">
             {sortedHistory.map((e) => {
-              const myRsvp = rsvps.find((r) => r.event_id === e.id && r.user_id === user?.id);
-              const wentBadge = myRsvp?.checked_in_at
-                ? { label: "Attended", cls: "bg-going/20 text-going border-going/40" }
-                : myRsvp?.cancelled_at
-                ? { label: "Cancelled", cls: "bg-no/20 text-no border-no/40" }
-                : myRsvp?.status === "going"
-                ? { label: "Going", cls: "bg-going/20 text-going border-going/40" }
-                : myRsvp?.status === "maybe"
-                ? { label: "Maybe", cls: "bg-maybe/20 text-maybe border-maybe/40" }
-                : e.host_id === user?.id
-                ? { label: "Hosted", cls: "bg-brand-yellow/20 text-brand-yellow border-brand-yellow/40" }
-                : { label: "Invited", cls: "bg-muted/30 text-muted-foreground border-border" };
+              const badgeMap: Record<HistoryItem["perspective"], string> = {
+                Attended: "bg-going/20 text-going border-going/40",
+                Going: "bg-going/20 text-going border-going/40",
+                Maybe: "bg-maybe/20 text-maybe border-maybe/40",
+                Hosted: "bg-brand-yellow/20 text-brand-yellow border-brand-yellow/40",
+                Invited: "bg-muted/30 text-muted-foreground border-border",
+                Cancelled: "bg-no/20 text-no border-no/40",
+              };
               return (
                 <li key={e.id}>
                   <Link
@@ -573,15 +569,20 @@ function WrappedPage() {
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold truncate">{e.title}</p>
+                      <p className="font-bold truncate flex items-center gap-1.5">
+                        {e.title}
+                        {e.isDemo && (
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground border border-border rounded px-1 py-0.5">demo</span>
+                        )}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {e.location ? `📍 ${e.location}` : "No location"}
                         {" • "}
-                        Hosted by @{profiles[e.host_id]?.username ?? "user"}
+                        Hosted by @{e.hostUsername}
                       </p>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${wentBadge.cls}`}>
-                      {wentBadge.label}
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${badgeMap[e.perspective]}`}>
+                      {e.perspective}
                     </span>
                   </Link>
                 </li>
