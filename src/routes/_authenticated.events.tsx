@@ -568,7 +568,7 @@ function EventsPage() {
                           key={s}
                           onClick={() => setRSVP(s)}
                           className={`flex-1 py-2.5 rounded-lg font-bold border transition-all ${
-                            myRsvp === s ? "scale-105" : ""
+                            myRsvp === s && !myRsvpRow?.cancelled_at ? "scale-105" : ""
                           } ${
                             s === "going" ? "bg-going/20 text-going border-going" :
                             s === "maybe" ? "bg-maybe/20 text-maybe border-maybe" :
@@ -579,6 +579,36 @@ function EventsPage() {
                         </button>
                       ))}
                     </div>
+
+                    {/* Lifecycle actions */}
+                    {activeLifecycle === "active" && !myRsvpRow?.checked_in_at && (
+                      <button
+                        onClick={checkIn}
+                        className="mt-3 w-full bg-brand-gradient text-black font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> Check in to event
+                      </button>
+                    )}
+                    {activeLifecycle === "attended" && (
+                      <p className="mt-3 text-sm text-going font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" /> You checked in
+                        {myRsvpRow?.checked_in_at && <span className="text-muted-foreground font-normal"> at {new Date(myRsvpRow.checked_in_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>}
+                      </p>
+                    )}
+                    {activeLifecycle === "upcoming" && myRsvp === "going" && !myRsvpRow?.cancelled_at && (
+                      <button
+                        onClick={cancelRSVP}
+                        className="mt-3 w-full bg-no/20 text-no border border-no font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-no/30"
+                      >
+                        <Ban className="w-4 h-4" /> Cancel RSVP
+                      </button>
+                    )}
+                    {activeLifecycle === "missed" && (
+                      <p className="mt-3 text-sm text-no font-bold">⏰ You missed this event.</p>
+                    )}
+                    {activeLifecycle === "cancelled" && (
+                      <p className="mt-3 text-sm text-no font-bold">🚫 You cancelled your RSVP.</p>
+                    )}
                   </div>
                 </section>
 
