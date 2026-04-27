@@ -190,34 +190,60 @@ function CalendarPage() {
                     return { eventId, sorted, title: group[0].event_title ?? "Event", topRank };
                   })
                   .sort((a, b) => a.topRank - b.topRank)
-                  .map(({ eventId, sorted, title }) => (
-                    <div key={eventId}>
-                      <h3 className="text-sm font-bold text-brand-pink uppercase tracking-wide mb-2">
-                        {title}
-                      </h3>
-                      <ul className="space-y-1">
-                        {sorted.map((t) => {
-                          const meta = PRIORITY_META[t.priority];
-                          return (
-                            <li key={t.id} className="flex items-center gap-2 py-2 border-b border-border last:border-0">
-                              <input
-                                type="checkbox"
-                                checked={t.completed}
-                                onChange={() => toggleTask(t)}
-                                className="accent-brand-yellow w-4 h-4"
-                              />
-                              <span className={`flex-1 ${t.completed ? "line-through text-muted-foreground" : ""}`}>
-                                {t.task_name}
-                              </span>
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.className}`}>
-                                {meta.label}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  ))}
+                  .map(({ eventId, sorted, title }) => {
+                    const remaining = sorted.filter((t) => !t.completed).length;
+                    const isOpen = openEvents[eventId] ?? remaining > 0;
+                    return (
+                      <div key={eventId} className="bg-input border border-border rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setOpenEvents((prev) => ({ ...prev, [eventId]: !isOpen }))}
+                          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-card transition-colors"
+                        >
+                          {isOpen ? (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          )}
+                          <span className="text-sm font-bold text-brand-pink uppercase tracking-wide flex-1 text-left truncate">
+                            {title}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              remaining > 0
+                                ? "bg-brand-gradient text-black"
+                                : "bg-muted/40 text-muted-foreground"
+                            }`}
+                          >
+                            {remaining > 0 ? `${remaining} left` : "All done"}
+                          </span>
+                        </button>
+                        {isOpen && (
+                          <ul className="px-3 pb-2">
+                            {sorted.map((t) => {
+                              const meta = PRIORITY_META[t.priority];
+                              return (
+                                <li key={t.id} className="flex items-center gap-2 py-2 border-b border-border last:border-0">
+                                  <input
+                                    type="checkbox"
+                                    checked={t.completed}
+                                    onChange={() => toggleTask(t)}
+                                    className="accent-brand-yellow w-4 h-4"
+                                  />
+                                  <span className={`flex-1 text-sm ${t.completed ? "line-through text-muted-foreground" : ""}`}>
+                                    {t.task_name}
+                                  </span>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.className}`}>
+                                    {meta.label}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </section>
