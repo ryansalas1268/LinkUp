@@ -225,15 +225,74 @@ function WrappedPage() {
       .slice(0, 8);
   }, [rsvps, profiles, user]);
 
-  const sortedHistory = useMemo(
-    () =>
-      [...events].sort((a, b) => {
-        const ta = new Date(a.scheduled_at ?? a.created_at).getTime();
-        const tb = new Date(b.scheduled_at ?? b.created_at).getTime();
-        return tb - ta;
-      }),
-    [events]
-  );
+  // Demo guest events to mix in alongside hosted ones (presentation only)
+  const guestDemoHistory = useMemo(() => [
+    {
+      id: "demo-karaoke",
+      title: "Karaoke Night 🎤",
+      location: "Muzette — H Street",
+      scheduled_at: `${year}-02-14T21:00:00Z`,
+      hostUsername: "lydialiu",
+      perspective: "Attended" as const,
+    },
+    {
+      id: "demo-soccer",
+      title: "Pickup Soccer ⚽",
+      location: "Meridian Hill Park",
+      scheduled_at: `${year}-03-08T15:00:00Z`,
+      hostUsername: "alexkim",
+      perspective: "Going" as const,
+    },
+    {
+      id: "demo-birthday",
+      title: "Maya's Birthday 🎂",
+      location: "Le Diplomate — 14th St",
+      scheduled_at: `${year}-04-04T23:00:00Z`,
+      hostUsername: "mayapatel",
+      perspective: "Maybe" as const,
+    },
+  ], [year]);
+
+  type HistoryItem = {
+    id: string;
+    title: string;
+    location: string | null;
+    scheduled_at: string | null;
+    hostUsername: string;
+    perspective: "Hosted" | "Going" | "Maybe" | "Attended" | "Invited" | "Cancelled";
+    isDemo?: boolean;
+  };
+
+  const sortedHistory = useMemo<HistoryItem[]>(() => {
+    const real: HistoryItem[] = events.map((e) => {
+      const myRsvp = rsvps.find((r) => r.event_id === e.id && r.user_id === user?.id);
+      const perspective: HistoryItem["perspective"] = myRsvp?.checked_in_at
+        ? "Attended"
+        : myRsvp?.cancelled_at
+        ? "Cancelled"
+        : myRsvp?.status === "going"
+        ? "Going"
+        : myRsvp?.status === "maybe"
+        ? "Maybe"
+        : e.host_id === user?.id
+        ? "Hosted"
+        : "Invited";
+      return {
+        id: e.id,
+        title: e.title,
+        location: e.location,
+        scheduled_at: e.scheduled_at ?? e.created_at,
+        hostUsername: profiles[e.host_id]?.username ?? "user",
+        perspective,
+      };
+    });
+    const demo: HistoryItem[] = guestDemoHistory.map((d) => ({ ...d, location: d.location, isDemo: true }));
+    return [...real, ...demo].sort((a, b) => {
+      const ta = a.scheduled_at ? new Date(a.scheduled_at).getTime() : 0;
+      const tb = b.scheduled_at ? new Date(b.scheduled_at).getTime() : 0;
+      return tb - ta;
+    });
+  }, [events, rsvps, profiles, user, guestDemoHistory]);
 
   const highlightEvents = sortedHistory.slice(0, 5);
 
