@@ -18,10 +18,10 @@ function Index() {
       <main className="max-w-6xl mx-auto px-6 pt-10 pb-20 md:pt-14">
         <section className="text-center space-y-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
-            Let plans make it out
+            Let Plans Make It Out
             <br />
             <span className="bg-brand-gradient bg-clip-text text-transparent">
-              the groupchat
+              The Groupchat
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
