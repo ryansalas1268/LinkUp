@@ -145,7 +145,7 @@ function CalendarPage() {
           </div>
         </section>
 
-        <div className="space-y-6">
+        <div className="space-y-8 sm:space-y-6">
           <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
             <h2 className="text-xl font-bold mb-4">Upcoming Events 📅</h2>
             <ul className="space-y-4 border-l-2 border-border pl-4 ml-2">
