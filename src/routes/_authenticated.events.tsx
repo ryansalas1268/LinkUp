@@ -639,6 +639,14 @@ function EventsPage() {
                   <h2 className="text-xl font-bold mb-1">Vote on a Time 🕒</h2>
                   <p className="text-sm text-muted-foreground mb-4">Select the time that works best for you!</p>
 
+                  {/* BR011: ≥1 proposed time required to finalize */}
+                  {proposals.length === 0 && !activeEvent.scheduled_at && (
+                    <div className="flex items-start gap-2 bg-maybe/10 border border-maybe/40 text-maybe rounded-lg p-3 mb-4 text-xs">
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                      <span><strong>BR011:</strong> Propose at least one date/time below before this event can be finalized.</span>
+                    </div>
+                  )}
+
                   <div className="space-y-2 mb-4">
                     {proposals.length === 0 && <p className="text-sm text-muted-foreground italic">No times proposed yet.</p>}
                     {proposals.map((p) => {
