@@ -1308,3 +1308,59 @@ function EventsPage() {
     </main>
   );
 }
+
+function PicksGroup({
+  title,
+  flag,
+  picks,
+  onPick,
+}: {
+  title: string;
+  flag: string;
+  picks: TopPick[];
+  onPick: (p: TopPick) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? picks : picks.slice(0, 4);
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+          <span className="mr-1">{flag}</span>{title}
+        </p>
+        {picks.length > 4 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="text-[11px] text-brand-yellow font-bold hover:underline"
+          >
+            {expanded ? "Show less" : `Show all ${picks.length}`}
+          </button>
+        )}
+      </div>
+      <ul className="space-y-1.5">
+        {visible.map((p) => (
+          <li key={p.name}>
+            <button
+              type="button"
+              onClick={() => onPick(p)}
+              className="w-full text-left bg-input hover:border-brand-yellow border border-border rounded-lg px-2.5 py-2 transition-colors group"
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-base leading-none mt-0.5">{p.emoji}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-bold text-sm truncate group-hover:text-brand-yellow">{p.name}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold shrink-0">{p.category}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">{p.area}</div>
+                  <div className="text-[11px] text-muted-foreground/80 line-clamp-1">{p.blurb}</div>
+                </div>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
