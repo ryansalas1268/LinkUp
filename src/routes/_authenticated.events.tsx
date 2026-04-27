@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle } from "lucide-react";
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
+import { SuggestionsBox } from "@/components/SuggestionsBox";
 import coverRooftop from "@/assets/event-rooftop.jpg";
 import coverVolleyball from "@/assets/event-volleyball.jpg";
 import coverPotluck from "@/assets/event-potluck.jpg";
