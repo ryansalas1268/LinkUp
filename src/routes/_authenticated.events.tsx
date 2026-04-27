@@ -1004,7 +1004,7 @@ function EventsPage() {
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">{progress}% Completed ({completedCount}/{tasks.length})</p>
 
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex flex-nowrap gap-2 mb-3">
                     <input
                       placeholder="What needs to be done?"
                       value={newTask.name}
