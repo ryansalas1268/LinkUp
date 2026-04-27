@@ -460,12 +460,18 @@ function EventsPage() {
 
       {showNew && (
         <div className="bg-card border border-brand-yellow rounded-xl p-6 mb-6 space-y-3">
-          <input
-            placeholder="Event title (e.g. Beach trip 🔥)"
-            value={newEvent.title}
-            onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-            className="w-full bg-input px-4 py-3 rounded-lg border border-border focus:outline-none focus:border-brand-yellow"
-          />
+          <div>
+            <input
+              placeholder="Event title (e.g. Beach trip 🔥)"
+              value={newEvent.title}
+              maxLength={BR.EVENT_TITLE_MAX}
+              onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+              className="w-full bg-input px-4 py-3 rounded-lg border border-border focus:outline-none focus:border-brand-yellow"
+            />
+            <p className="text-xs text-muted-foreground mt-1 text-right">
+              {newEvent.title.length}/{BR.EVENT_TITLE_MAX} • BR010
+            </p>
+          </div>
           <input
             placeholder="Location"
             value={newEvent.location}
