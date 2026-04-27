@@ -1004,23 +1004,23 @@ function EventsPage() {
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">{progress}% Completed ({completedCount}/{tasks.length})</p>
 
-                  <div className="flex gap-2 mb-3">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     <input
                       placeholder="What needs to be done?"
                       value={newTask.name}
                       onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
-                      className="flex-1 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
+                      className="flex-1 min-w-0 basis-40 bg-input px-3 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
                     />
                     <select
                       value={newTask.priority}
                       onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as typeof newTask.priority })}
-                      className="bg-input px-2 py-2 rounded-lg border border-border text-sm"
+                      className="shrink-0 bg-input px-2 py-2 rounded-lg border border-border text-sm"
                     >
                       <option value="high">🔴</option>
                       <option value="med">🟡</option>
                       <option value="low">🟢</option>
                     </select>
-                    <button onClick={addTask} className="bg-brand-gradient text-black font-bold px-4 py-2 rounded-lg text-sm">Add</button>
+                    <button onClick={addTask} className="shrink-0 bg-brand-gradient text-black font-bold px-4 py-2 rounded-lg text-sm">Add</button>
                   </div>
 
                   <ul className="space-y-2">
