@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle } from "lucide-react";
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
+import { validateEventTitle, BR } from "@/lib/businessRules";
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
@@ -159,12 +160,28 @@ function EventsPage() {
   useEffect(() => { if (activeId) loadEventDetails(activeId); }, [activeId]);
 
   const createEvent = async () => {
-    if (!newEvent.title || !user) { toast.error("Event needs a title"); return; }
+    if (!user) return;
+    // BR010: title required, max 50 chars
+    const titleCheck = validateEventTitle(newEvent.title);
+    if (!titleCheck.ok) { toast.error(titleCheck.message); return; }
+    // BR013: free-tier cap — 1 hosted event per calendar month
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const { count } = await supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("host_id", user.id)
+      .gte("created_at", monthStart.toISOString());
+    if ((count ?? 0) >= BR.FREE_EVENTS_PER_MONTH) {
+      toast.error(`Free plan: ${BR.FREE_EVENTS_PER_MONTH} event/month. Upgrade to Premium for unlimited events.`);
+      return;
+    }
     const { data, error } = await supabase
       .from("events")
       .insert({
         host_id: user.id,
-        title: newEvent.title,
+        title: newEvent.title.trim(),
         description: newEvent.description || null,
         location: newEvent.location || null,
         scheduled_at: newEvent.scheduled_at || null,
