@@ -193,6 +193,50 @@ function EventsPage() {
   };
 
   const loadEventDetails = async (eventId: string) => {
+    if (isDemoEventId(eventId)) {
+      const d = DEMO_DETAILS[eventId];
+      if (!d) return;
+      const myRsvp: RsvpRow | null = user
+        ? { event_id: eventId, user_id: user.id, status: d.myStatus, checked_in_at: null, cancelled_at: null }
+        : null;
+      const allRsvps: RsvpRow[] = [
+        ...d.rsvps.map((r) => ({ event_id: eventId, ...r })),
+        ...(myRsvp ? [myRsvp] : []),
+      ];
+      setRsvps(allRsvps);
+      setProposals([]);
+      setVotes([]);
+      setTasks(
+        d.tasks.map((t) => ({
+          id: t.id,
+          event_id: eventId,
+          task_name: t.task_name,
+          priority: t.priority,
+          completed: t.completed,
+          created_by: "demo",
+          assigned_to: t.assigned_to,
+        }))
+      );
+      const expenseRows: ExpenseRow[] = d.expenses.map((e) => ({
+        id: e.id,
+        event_id: eventId,
+        paid_by: e.paid_by,
+        title: e.title,
+        amount: e.amount,
+        notes: e.notes,
+      }));
+      setExpenses(expenseRows);
+      const shareRows: ExpenseShareRow[] = d.expenses.flatMap((e) =>
+        e.participants.map((uid) => ({
+          id: `${e.id}-${uid}`,
+          expense_id: e.id,
+          user_id: uid,
+          share_amount: e.amount / Math.max(1, e.participants.length),
+        }))
+      );
+      setShares(shareRows);
+      return;
+    }
     const [{ data: r }, { data: p }, { data: t }, { data: ex }] = await Promise.all([
       supabase.from("rsvps").select("*").eq("event_id", eventId),
       supabase.from("time_proposals").select("*").eq("event_id", eventId).order("proposed_time"),
