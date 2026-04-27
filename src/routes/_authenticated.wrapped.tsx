@@ -73,15 +73,6 @@ interface ProfileRow {
   avatar_url: string | null;
 }
 
-const HIGHLIGHT_IMAGES = [
-  "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80",
-  "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80",
-  "https://images.unsplash.com/photo-1502635385003-ee1e6a1a742d?w=800&q=80",
-  "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=800&q=80",
-  "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=800&q=80",
-  "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",
-  "https://images.unsplash.com/photo-1496024840928-4c417adf211d?w=800&q=80",
-];
 
 function WrappedPage() {
   const { user } = useAuth();
