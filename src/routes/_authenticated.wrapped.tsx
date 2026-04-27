@@ -147,14 +147,15 @@ function WrappedPage() {
       .filter((s) => s.user_id === user.id)
       .reduce((s, x) => s + Number(x.share_amount), 0);
 
-    // Longest event by duration (scheduled_at -> ended_at). Fallback: most attended.
-    let longest: { event: EventRow; hours: number } | null = null;
-    events.forEach((e) => {
-      if (e.scheduled_at && e.ended_at) {
-        const h = (new Date(e.ended_at).getTime() - new Date(e.scheduled_at).getTime()) / 36e5;
-        if (longest === null || h > longest.hours) longest = { event: e, hours: h };
-      }
-    });
+    // Longest event by duration (scheduled_at -> ended_at)
+    const durations = events
+      .filter((e): e is EventRow & { scheduled_at: string; ended_at: string } => !!e.scheduled_at && !!e.ended_at)
+      .map((e) => ({
+        event: e,
+        hours: (new Date(e.ended_at).getTime() - new Date(e.scheduled_at).getTime()) / 36e5,
+      }))
+      .sort((a, b) => b.hours - a.hours);
+    const longest: { event: EventRow; hours: number } | null = durations[0] ?? null;
 
     // Most popular event (most "going")
     const goingByEvent: Record<string, number> = {};
