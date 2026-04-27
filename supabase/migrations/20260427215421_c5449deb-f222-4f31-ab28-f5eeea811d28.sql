@@ -1,0 +1,9 @@
+ALTER TABLE public.friendships DROP CONSTRAINT IF EXISTS friendships_requester_id_fkey;
+ALTER TABLE public.friendships DROP CONSTRAINT IF EXISTS friendships_addressee_id_fkey;
+ALTER TABLE public.rsvps DROP CONSTRAINT IF EXISTS rsvps_user_id_fkey;
+ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_created_by_fkey;
+ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_assigned_to_fkey;
+ALTER TABLE public.time_proposals DROP CONSTRAINT IF EXISTS time_proposals_proposed_by_fkey;
+ALTER TABLE public.time_votes DROP CONSTRAINT IF EXISTS time_votes_user_id_fkey;
+ALTER TABLE public.conversation_members DROP CONSTRAINT IF EXISTS conversation_members_user_id_fkey;
+ALTER TABLE public.messages DROP CONSTRAINT IF EXISTS messages_sender_id_fkey;
