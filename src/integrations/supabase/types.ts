@@ -504,6 +504,7 @@ export type Database = {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
+      seed_demo_for_user: { Args: { me_id: string }; Returns: undefined }
     }
     Enums: {
       friendship_status: "pending" | "accepted" | "declined"
