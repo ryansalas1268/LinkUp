@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle } from "lucide-react";
+import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban } from "lucide-react";
+import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
@@ -15,6 +16,7 @@ interface EventRow {
   description: string | null;
   location: string | null;
   scheduled_at: string | null;
+  ended_at: string | null;
   host_id: string;
 }
 
@@ -22,6 +24,8 @@ interface RsvpRow {
   event_id: string;
   user_id: string;
   status: "going" | "maybe" | "no" | "invited";
+  checked_in_at: string | null;
+  cancelled_at: string | null;
 }
 
 interface ProposalRow {
