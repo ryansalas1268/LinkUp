@@ -747,7 +747,12 @@ function EventsPage() {
                       />
                     )}
                     <div className="p-3">
-                      <div className="font-bold truncate">{e.title}</div>
+                      <div className="font-bold truncate flex items-center gap-1.5">
+                        {e.title}
+                        {isDemoEventId(e.id) && (
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground border border-border rounded px-1 py-0.5 shrink-0">guest demo</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {e.scheduled_at && (
                           <span className="text-xs text-brand-yellow">
