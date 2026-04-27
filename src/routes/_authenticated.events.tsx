@@ -7,6 +7,7 @@ import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, 
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
 import { SuggestionsBox } from "@/components/SuggestionsBox";
+import { DEMO_EVENTS, DEMO_PROFILES, DEMO_DETAILS, isDemoEventId } from "@/lib/demoGuestEvents";
 import coverRooftop from "@/assets/event-rooftop.jpg";
 import coverVolleyball from "@/assets/event-volleyball.jpg";
 import coverPotluck from "@/assets/event-potluck.jpg";
@@ -161,15 +162,25 @@ function EventsPage() {
 
   const loadAll = async () => {
     const { data: evs } = await supabase.from("events").select("*").order("created_at", { ascending: false });
-    setEvents(evs ?? []);
-    if (evs && evs.length && !activeId) setActiveId(evs[0].id);
+    const realEvents = evs ?? [];
+    const merged = [...realEvents, ...DEMO_EVENTS];
+    setEvents(merged);
+    if (merged.length && !activeId) setActiveId(merged[0].id);
 
     const { data: profs } = await supabase.from("profiles").select("id, username, display_name");
-    if (profs) setProfiles(Object.fromEntries(profs.map((p) => [p.id, p])));
+    const profileMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p]));
+    DEMO_PROFILES.forEach((p) => { if (!profileMap[p.id]) profileMap[p.id] = p; });
+    setProfiles(profileMap);
 
     if (user) {
       const { data: mine } = await supabase.from("rsvps").select("*").eq("user_id", user.id);
-      if (mine) setMyRsvpsByEvent(Object.fromEntries(mine.map((r) => [r.event_id, r as RsvpRow])));
+      const rsvpMap: Record<string, RsvpRow> = Object.fromEntries((mine ?? []).map((r) => [r.event_id, r as RsvpRow]));
+      // Inject the current user's RSVP for each demo event
+      DEMO_EVENTS.forEach((e) => {
+        const d = DEMO_DETAILS[e.id];
+        if (d) rsvpMap[e.id] = { event_id: e.id, user_id: user.id, status: d.myStatus, checked_in_at: null, cancelled_at: null };
+      });
+      setMyRsvpsByEvent(rsvpMap);
 
       const { data: fs } = await supabase
         .from("friendships")
