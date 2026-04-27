@@ -1,71 +1,101 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
-import { getStripeEnvironment } from "@/lib/stripe";
 
-export interface SubscriptionRow {
-  id: string;
-  user_id: string;
-  stripe_subscription_id: string;
-  product_id: string;
-  price_id: string;
-  status: string;
-  current_period_start: string | null;
-  current_period_end: string | null;
+export type MockPlanId = "premium_monthly" | "premium_yearly" | "premium_lifetime";
+
+export interface MockSubscription {
+  price_id: MockPlanId;
+  status: "active" | "canceled";
+  started_at: string;
+  current_period_end: string | null; // null = lifetime
   cancel_at_period_end: boolean;
-  environment: string;
+}
+
+const storageKey = (userId: string) => `linkup:mock_subscription:${userId}`;
+
+const PLAN_DURATIONS: Record<MockPlanId, number | null> = {
+  premium_monthly: 30 * 24 * 60 * 60 * 1000,
+  premium_yearly: 365 * 24 * 60 * 60 * 1000,
+  premium_lifetime: null,
+};
+
+function readSub(userId: string): MockSubscription | null {
+  try {
+    const raw = localStorage.getItem(storageKey(userId));
+    if (!raw) return null;
+    return JSON.parse(raw) as MockSubscription;
+  } catch {
+    return null;
+  }
+}
+
+function writeSub(userId: string, sub: MockSubscription | null) {
+  if (sub === null) localStorage.removeItem(storageKey(userId));
+  else localStorage.setItem(storageKey(userId), JSON.stringify(sub));
+  window.dispatchEvent(new CustomEvent("linkup:subscription-changed"));
 }
 
 export function useSubscription() {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<SubscriptionRow | null>(null);
+  const [subscription, setSubscription] = useState<MockSubscription | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refetch = async () => {
+  const refresh = useCallback(() => {
     if (!user) {
       setSubscription(null);
       setLoading(false);
       return;
     }
-    const { data } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("environment", getStripeEnvironment())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    setSubscription((data as SubscriptionRow | null) ?? null);
+    setSubscription(readSub(user.id));
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
-    refetch();
-    if (!user) return;
-
-    const channel = supabase
-      .channel(`subscriptions:${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
-        () => refetch()
-      )
-      .subscribe();
-
+    refresh();
+    const handler = () => refresh();
+    window.addEventListener("linkup:subscription-changed", handler);
+    window.addEventListener("storage", handler);
     return () => {
-      supabase.removeChannel(channel);
+      window.removeEventListener("linkup:subscription-changed", handler);
+      window.removeEventListener("storage", handler);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [refresh]);
+
+  const subscribe = useCallback(
+    (planId: MockPlanId) => {
+      if (!user) return;
+      const duration = PLAN_DURATIONS[planId];
+      const sub: MockSubscription = {
+        price_id: planId,
+        status: "active",
+        started_at: new Date().toISOString(),
+        current_period_end: duration ? new Date(Date.now() + duration).toISOString() : null,
+        cancel_at_period_end: false,
+      };
+      writeSub(user.id, sub);
+    },
+    [user]
+  );
+
+  const cancel = useCallback(() => {
+    if (!user) return;
+    const current = readSub(user.id);
+    if (!current) return;
+    if (current.price_id === "premium_lifetime") return; // can't cancel lifetime
+    writeSub(user.id, { ...current, cancel_at_period_end: true });
+  }, [user]);
+
+  const reset = useCallback(() => {
+    if (!user) return;
+    writeSub(user.id, null);
+  }, [user]);
 
   const isActive = (() => {
     if (!subscription) return false;
-    if (subscription.price_id === "premium_lifetime" && subscription.status === "active") return true;
-    const future = !subscription.current_period_end || new Date(subscription.current_period_end) > new Date();
-    if (["active", "trialing", "past_due"].includes(subscription.status) && future) return true;
-    if (subscription.status === "canceled" && subscription.current_period_end && new Date(subscription.current_period_end) > new Date()) return true;
-    return false;
+    if (subscription.price_id === "premium_lifetime") return true;
+    if (!subscription.current_period_end) return false;
+    return new Date(subscription.current_period_end) > new Date();
   })();
 
-  return { subscription, isActive, loading, refetch };
+  return { subscription, isActive, loading, subscribe, cancel, reset, refetch: refresh };
 }
