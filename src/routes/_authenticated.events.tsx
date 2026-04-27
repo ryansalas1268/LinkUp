@@ -138,6 +138,8 @@ function EventsPage() {
   const [friendIds, setFriendIds] = useState<string[]>([]);
   const [myRsvpsByEvent, setMyRsvpsByEvent] = useState<Record<string, RsvpRow>>({});
   const [sortMode, setSortMode] = useState<"soonest" | "recent">("soonest");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
 
   const activeEvent = events.find((e) => e.id === activeId);
 
@@ -340,18 +342,20 @@ function EventsPage() {
     setActiveId(remaining[0]?.id ?? null);
   };
 
-  const renameEvent = async () => {
+  const renameEvent = async (rawNext: string) => {
     if (!activeEvent || activeEvent.host_id !== user?.id) return;
-    const next = window.prompt("Rename event", activeEvent.title)?.trim();
-    if (!next || next === activeEvent.title) return;
+    const next = rawNext.trim();
+    if (!next || next === activeEvent.title) { setEditingTitle(false); return; }
     if (isDemoEventId(activeEvent.id)) {
       setEvents((prev) => prev.map((e) => (e.id === activeEvent.id ? { ...e, title: next } : e)));
+      setEditingTitle(false);
       toast.success("Renamed (demo)");
       return;
     }
     const { error } = await supabase.from("events").update({ title: next }).eq("id", activeEvent.id);
     if (error) { toast.error(error.message); return; }
     setEvents((prev) => prev.map((e) => (e.id === activeEvent.id ? { ...e, title: next } : e)));
+    setEditingTitle(false);
     toast.success("Event renamed");
   };
 
@@ -852,10 +856,24 @@ function EventsPage() {
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
-                        {activeEvent.host_id === user?.id && (
+                        {editingTitle && activeEvent.host_id === user?.id ? (
+                          <input
+                            autoFocus
+                            value={titleDraft}
+                            onChange={(e) => setTitleDraft(e.target.value)}
+                            onBlur={() => renameEvent(titleDraft)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") { e.preventDefault(); renameEvent(titleDraft); }
+                              if (e.key === "Escape") { setEditingTitle(false); }
+                            }}
+                            className="text-xl sm:text-2xl font-bold bg-input border border-border rounded-md px-2 py-1 outline-none focus:border-brand-yellow"
+                          />
+                        ) : (
+                          <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
+                        )}
+                        {!editingTitle && activeEvent.host_id === user?.id && (
                           <button
-                            onClick={renameEvent}
+                            onClick={() => { setTitleDraft(activeEvent.title); setEditingTitle(true); }}
                             className="text-muted-foreground hover:text-brand-yellow"
                             title="Rename event"
                             aria-label="Rename event"
