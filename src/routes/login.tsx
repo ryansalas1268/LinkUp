@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { friendlyLoginError } from "@/lib/businessRules";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -30,7 +31,8 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
-      toast.error(error.message);
+      // BR004: friendly error, deny access
+      toast.error(friendlyLoginError(error.message));
       return;
     }
     toast.success(`Welcome back!`);
