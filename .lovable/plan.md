@@ -1,45 +1,35 @@
 ## Goal
-Create a polished **demo script** you can read off during your LinkUp capstone presentation. It will walk through the live demo flow (sign up → events → friends → messages → calendar → upgrade) AND include "behind the scenes" backend talking points (auth, database, RLS, freemium logic, payments).
+Regenerate the LinkUp demo script as a new versioned `.docx` so the **entire run-through fits in 5–7 minutes**. Same content scope as before (sign up → events → friends → messages → calendar → upgrade + backend talking points), just rebalanced timings and trimmed talking points so it actually hits the target length when read aloud.
 
-## Format
-I'll deliver it as a **`.docx` file** in `/mnt/documents/LinkUp_Demo_Script.docx` so you can print it, edit it, or pull it up on a second screen during the demo. (If you'd rather have a `.pdf` or `.pptx` speaker-notes deck, just say the word before I start.)
+## Output
+- New file: `/mnt/documents/LinkUp_Demo_Script_v2.docx` (keeps the original v1 intact for comparison)
+- Same `[ACTION]` / `[SAY]` / `[BACKEND]` block structure as v1 so it still reads like a script
 
-## Structure of the script
+## Time budget (target ~6 min, fits 5–7 min window)
 
-1. **Cover page** — LinkUp, capstone group, date, presenter cues.
-2. **Opening hook (30s)** — "Group chats are where plans go to die" pitch, target = Gen Z friend groups.
-3. **Section 1 — Sign up flow**
-   - What to click: Sign Up → fill form → land on Events
-   - Talking points: BR001 username uniqueness, BR002 password rules, Google OAuth, profile auto-creation via `handle_new_user()` trigger
-4. **Section 2 — Events page (core feature)**
-   - Create event, invite friends, RSVP, group to-do list, guest list
-   - Talking points: Events vs Groups distinction, freemium cap (1 event/month free), RLS so only friends see your events
-5. **Section 3 — Friends**
-   - Add friends, accept requests
-   - Talking points: friendship graph drives event visibility
-6. **Section 4 — Messages**
-   - Direct chats + auto-created event group chats (`get_or_create_event_chat` function)
-   - Talking points: realtime via Supabase channels, host-only delete for event chats
-7. **Section 5 — Calendar**
-   - Unified view of every RSVP'd event
-8. **Section 6 — Upgrade / Premium**
-   - Show pricing ($60/yr individual, $144/yr group, lifetime option)
-   - Talking points: Stripe sandbox checkout, `has_active_premium()` server-side check, mock subscription state for demo
-9. **Section 7 — "Behind the scenes" backend slide**
-   - Stack: TanStack Start + React 19 + Tailwind v4, Lovable Cloud (Postgres + Auth + Edge Functions + Storage)
-   - Security: Row-Level Security on every table, separate `user_roles` pattern, server-side premium validation
-   - Data model highlights from your class diagram (User, Event, RSVP, Task, Message, Conversation, Subscription)
-10. **Closing (30s)** — what's next, ask for questions.
-11. **Appendix — Demo reset checklist** — log out, clear mock subscription, which test account to use, fallback if wifi dies.
+| # | Section | Target |
+|---|---------|--------|
+| 1 | Opening hook | 0:20 |
+| 2 | Sign up flow | 0:40 |
+| 3 | Events page (core feature) | 1:30 |
+| 4 | Friends | 0:30 |
+| 5 | Messages | 0:40 |
+| 6 | Calendar | 0:25 |
+| 7 | Upgrade / Premium | 0:35 |
+| 8 | Behind-the-scenes backend | 0:50 |
+| 9 | Closing | 0:20 |
+| | **Total** | **~6:10** |
+
+Each section header in the doc shows its time budget in the right margin so the presenter can pace themselves.
+
+## What changes vs v1
+- Trim each `[SAY]` block to roughly the word count that fits its time budget (~150 wpm).
+- Collapse the backend talking points into one tight closing section instead of sprinkling long technical asides through every feature section.
+- Keep the appendix (demo reset checklist + fallback if wifi dies) since it's reference material, not spoken time.
 
 ## Style
-- Each section has **[ACTION]** (what to click) and **[SAY]** (verbatim talking points) blocks so it reads like a real script, not a feature list.
-- Estimated time per section in the margin so you can hit a target length (I'll target ~6–7 min total, adjustable).
-- Plain language for the audience-facing parts; technical depth reserved for the "Behind the scenes" section.
+- Same dark-on-light, color-coded blocks: `[ACTION]` blue, `[SAY]` black, `[BACKEND]` muted gray.
+- Page numbers in footer, "LinkUp Capstone — Demo Script v2" in header.
+- QA pass: convert to PDF + page images and visually verify before delivery.
 
-## What I need from you (optional)
-- Target demo length (default: 6–7 min)
-- Who's presenting which section, if you want names baked in
-- Any feature you want to skip or emphasize
-
-If you don't answer, I'll use sensible defaults and you can tweak after.
+If you'd rather have a tighter 5-min cut or a longer 7-min cut, say which and I'll shift the budget table before generating.
