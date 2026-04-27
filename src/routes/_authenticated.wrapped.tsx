@@ -580,3 +580,46 @@ function Standout({
     </div>
   );
 }
+
+function RecCard({
+  icon,
+  heading,
+  badge,
+  picks,
+}: {
+  icon: React.ReactNode;
+  heading: string;
+  badge?: string;
+  picks: TopPick[];
+}) {
+  return (
+    <div className="bg-input rounded-xl p-4 border border-border">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-brand-yellow">
+          {icon}
+          <h3 className="font-bold text-sm">{heading}</h3>
+        </div>
+        {badge && (
+          <span className="text-[9px] uppercase tracking-wider font-black bg-brand-gradient text-black px-2 py-0.5 rounded-full">
+            {badge}
+          </span>
+        )}
+      </div>
+      <ul className="space-y-2">
+        {picks.map((p) => (
+          <li key={p.name} className="flex items-start gap-2.5">
+            <span className="text-base leading-none mt-0.5">{p.emoji}</span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-1.5 flex-wrap">
+                <span className="font-bold text-sm">{p.name}</span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{p.category}</span>
+              </div>
+              <div className="text-[11px] text-muted-foreground">{p.area}</div>
+              <div className="text-xs text-muted-foreground/80">{p.blurb}</div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
