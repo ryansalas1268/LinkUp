@@ -483,24 +483,33 @@ function EventsPage() {
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           <aside className="space-y-2">
             <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
-            {events.map((e) => (
-              <button
-                key={e.id}
-                onClick={() => setActiveId(e.id)}
-                className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                  activeId === e.id
-                    ? "bg-card border-brand-pink"
-                    : "bg-card border-border hover:border-brand-yellow"
-                }`}
-              >
-                <div className="font-bold truncate">{e.title}</div>
-                {e.scheduled_at && (
-                  <div className="text-xs text-brand-yellow mt-1">
-                    {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            {events.map((e) => {
+              const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
+              const meta = getLifecycleMeta(lc);
+              return (
+                <button
+                  key={e.id}
+                  onClick={() => setActiveId(e.id)}
+                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                    activeId === e.id
+                      ? "bg-card border-brand-pink"
+                      : "bg-card border-border hover:border-brand-yellow"
+                  }`}
+                >
+                  <div className="font-bold truncate">{e.title}</div>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {e.scheduled_at && (
+                      <span className="text-xs text-brand-yellow">
+                        {new Date(e.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </span>
+                    )}
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${meta.className}`}>
+                      {meta.emoji} {meta.label}
+                    </span>
                   </div>
-                )}
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </aside>
 
           {activeEvent && (
