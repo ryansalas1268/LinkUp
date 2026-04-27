@@ -261,7 +261,7 @@ function MessagesPage() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-8">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
         <aside className="bg-card border border-border rounded-xl p-5 min-h-[600px]">
           <div className="flex items-center justify-between mb-4">
