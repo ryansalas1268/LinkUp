@@ -152,7 +152,7 @@ function WrappedPage() {
     events.forEach((e) => {
       if (e.scheduled_at && e.ended_at) {
         const h = (new Date(e.ended_at).getTime() - new Date(e.scheduled_at).getTime()) / 36e5;
-        if (!longest || h > longest.hours) longest = { event: e, hours: h };
+        if (longest === null || h > longest.hours) longest = { event: e, hours: h };
       }
     });
 

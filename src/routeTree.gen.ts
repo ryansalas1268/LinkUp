@@ -13,6 +13,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticated.wrapped'
 import { Route as AuthenticatedRulesRouteImport } from './routes/_authenticated.rules'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated.messages'
 import { Route as AuthenticatedLifecycleRouteImport } from './routes/_authenticated.lifecycle'
@@ -38,6 +39,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWrappedRoute = AuthenticatedWrappedRouteImport.update({
+  id: '/wrapped',
+  path: '/wrapped',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedRulesRoute = AuthenticatedRulesRouteImport.update({
   id: '/rules',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/rules': typeof AuthenticatedRulesRoute
+  '/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/lifecycle': typeof AuthenticatedLifecycleRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/rules': typeof AuthenticatedRulesRoute
+  '/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/_authenticated/lifecycle': typeof AuthenticatedLifecycleRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/rules': typeof AuthenticatedRulesRoute
+  '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/lifecycle'
     | '/messages'
     | '/rules'
+    | '/wrapped'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/lifecycle'
     | '/messages'
     | '/rules'
+    | '/wrapped'
   id:
     | '__root__'
     | '/'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/_authenticated/lifecycle'
     | '/_authenticated/messages'
     | '/_authenticated/rules'
+    | '/_authenticated/wrapped'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/wrapped': {
+      id: '/_authenticated/wrapped'
+      path: '/wrapped'
+      fullPath: '/wrapped'
+      preLoaderRoute: typeof AuthenticatedWrappedRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/rules': {
       id: '/_authenticated/rules'
@@ -231,6 +250,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedLifecycleRoute: typeof AuthenticatedLifecycleRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedRulesRoute: typeof AuthenticatedRulesRoute
+  AuthenticatedWrappedRoute: typeof AuthenticatedWrappedRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -240,6 +260,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLifecycleRoute: AuthenticatedLifecycleRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedRulesRoute: AuthenticatedRulesRoute,
+  AuthenticatedWrappedRoute: AuthenticatedWrappedRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
