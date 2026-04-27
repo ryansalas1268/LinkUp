@@ -97,8 +97,8 @@ function SignupPage() {
               <input className={inputClass} placeholder="Last Name" value={form.last_name} onChange={update("last_name")} required />
             </div>
             <input className={inputClass} type="email" placeholder="Email Address" value={form.email} onChange={update("email")} required />
-            <input className={inputClass} placeholder={`Choose Username (${BR.USERNAME_MIN}–${BR.USERNAME_MAX} chars)`} minLength={BR.USERNAME_MIN} maxLength={BR.USERNAME_MAX} value={form.username} onChange={update("username")} required />
-            <input className={inputClass} type="password" placeholder={`Password (≥${BR.PASSWORD_MIN}, letter+number+special)`} minLength={BR.PASSWORD_MIN} value={form.password} onChange={update("password")} required />
+            <input className={inputClass} placeholder="Choose Username" minLength={BR.USERNAME_MIN} maxLength={BR.USERNAME_MAX} value={form.username} onChange={update("username")} required />
+            <input className={inputClass} type="password" placeholder="Password" minLength={BR.PASSWORD_MIN} value={form.password} onChange={update("password")} required />
             <p className="text-xs text-muted-foreground text-left -mt-1">
               Must include a letter, a number, and a special character.
             </p>
