@@ -119,7 +119,7 @@ function CalendarPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {Array.from({ length: firstDay }).map((_, i) => (
               <div key={`e${i}`} />
             ))}
@@ -129,7 +129,7 @@ function CalendarPage() {
               return (
                 <div
                   key={d}
-                  className={`min-h-[80px] flex items-center justify-center font-bold text-xl rounded-lg cursor-pointer transition-colors relative ${
+                  className={`min-h-[44px] sm:min-h-[80px] flex items-center justify-center font-bold text-sm sm:text-xl rounded-lg cursor-pointer transition-colors relative ${
                     isToday ? "bg-brand-gradient text-black" :
                     hasEvent ? "bg-input border-2 border-brand-yellow hover:bg-card" :
                     "bg-input hover:bg-card"
@@ -137,7 +137,7 @@ function CalendarPage() {
                 >
                   {d}
                   {hasEvent && !isToday && (
-                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-brand-yellow" />
+                    <span className="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-brand-yellow" />
                   )}
                 </div>
               );
@@ -146,7 +146,7 @@ function CalendarPage() {
         </section>
 
         <div className="space-y-6">
-          <section className="bg-card border border-border rounded-xl p-6">
+          <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
             <h2 className="text-xl font-bold mb-4">Upcoming Events 📅</h2>
             <ul className="space-y-4 border-l-2 border-border pl-4 ml-2">
               {upcoming.length === 0 && <li className="text-sm text-muted-foreground italic">Nothing scheduled.</li>}
