@@ -135,8 +135,28 @@ function EventsPage() {
   const [inviteResults, setInviteResults] = useState<ProfileRow[]>([]);
   const [friendIds, setFriendIds] = useState<string[]>([]);
   const [myRsvpsByEvent, setMyRsvpsByEvent] = useState<Record<string, RsvpRow>>({});
+  const [sortMode, setSortMode] = useState<"soonest" | "recent">("soonest");
 
   const activeEvent = events.find((e) => e.id === activeId);
+
+  const sortedEvents = (() => {
+    const now = Date.now();
+    if (sortMode === "recent") {
+      return [...events].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+    }
+    // soonest: upcoming events ordered by closest date, then past events newest-first
+    const withTime = events.map((e) => ({ e, t: e.scheduled_at ? +new Date(e.scheduled_at) : null }));
+    const upcoming = withTime
+      .filter((x) => x.t !== null && (x.t as number) >= now)
+      .sort((a, b) => (a.t as number) - (b.t as number));
+    const past = withTime
+      .filter((x) => x.t !== null && (x.t as number) < now)
+      .sort((a, b) => (b.t as number) - (a.t as number));
+    const undated = withTime
+      .filter((x) => x.t === null)
+      .sort((a, b) => +new Date(b.e.created_at) - +new Date(a.e.created_at));
+    return [...upcoming, ...past, ...undated].map((x) => x.e);
+  })();
 
   const loadAll = async () => {
     const { data: evs } = await supabase.from("events").select("*").order("created_at", { ascending: false });
@@ -597,8 +617,29 @@ function EventsPage() {
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           <aside className={`space-y-4 ${activeEvent ? "hidden lg:block" : ""}`}>
             <div className="space-y-2">
-              <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
-              {events.map((e) => {
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <h2 className="text-sm font-bold text-muted-foreground uppercase">Your events</h2>
+                <div className="flex bg-input border border-border rounded-full p-0.5">
+                  {([
+                    { id: "soonest", label: "Soonest" },
+                    { id: "recent", label: "Recent" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setSortMode(opt.id)}
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full transition-colors ${
+                        sortMode === opt.id
+                          ? "bg-brand-gradient text-black"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {sortedEvents.map((e) => {
                 const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
                 const meta = getLifecycleMeta(lc);
                 const cover = coverFor(e.title, e.cover_image_url);
