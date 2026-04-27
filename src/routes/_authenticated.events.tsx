@@ -566,7 +566,7 @@ function EventsPage() {
           </aside>
 
           {activeEvent && (
-            <div className="grid xl:grid-cols-[2fr_1fr] gap-6">
+            <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
               <div className="space-y-8 sm:space-y-6">
                 <button
                   onClick={() => setActiveId(null)}
