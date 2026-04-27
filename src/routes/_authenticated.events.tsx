@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Plus, MapPin, Trash2, DollarSign, X, MessageCircle, CheckCircle2, Ban, AlertTriangle } from "lucide-react";
 import { getLifecycleState, getLifecycleMeta, type LifecycleState } from "@/lib/lifecycle";
 import { validateEventTitle, BR } from "@/lib/businessRules";
+import { DC_PICKS, GLOBAL_PICKS, type Pick as TopPick } from "@/lib/topPicks";
 import coverRooftop from "@/assets/event-rooftop.jpg";
 import coverVolleyball from "@/assets/event-volleyball.jpg";
 import coverPotluck from "@/assets/event-potluck.jpg";
@@ -252,6 +253,26 @@ function EventsPage() {
     const remaining = events.filter((e) => e.id !== id);
     setEvents(remaining);
     setActiveId(remaining[0]?.id ?? null);
+  };
+
+  const usePickAsLocation = async (pick: TopPick) => {
+    const label = `${pick.name} — ${pick.area}`;
+    // If the create-event modal is open, prefill there. Otherwise update the active event (host only).
+    if (showNew) {
+      setNewEvent({ ...newEvent, location: label });
+      toast.success(`Set new event location to ${pick.name}`);
+      return;
+    }
+    if (!activeEvent || !user || activeEvent.host_id !== user.id) {
+      // Fallback: copy to clipboard for non-hosts.
+      try { await navigator.clipboard.writeText(label); toast.success(`Copied "${pick.name}" to clipboard`); }
+      catch { toast.error("Couldn't copy"); }
+      return;
+    }
+    const { error } = await supabase.from("events").update({ location: label }).eq("id", activeEvent.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Location set to ${pick.name}`);
+    loadAll();
   };
 
   const setRSVP = async (status: "going" | "maybe" | "no") => {
@@ -1077,6 +1098,25 @@ function EventsPage() {
                 </section>
 
                 <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
+                  <div className="flex items-baseline justify-between mb-1">
+                    <h2 className="text-xl font-bold">Top Picks 📍</h2>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Inspiration</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {showNew
+                      ? "Tap a spot to fill it in as your event location."
+                      : activeEvent && user && activeEvent.host_id === user.id
+                        ? "Tap a spot to set it as this event's location."
+                        : "Tap a spot to copy it to your clipboard."}
+                  </p>
+
+                  <PicksGroup title="Local — Washington, D.C." flag="🏛️" picks={DC_PICKS} onPick={usePickAsLocation} />
+                  <div className="mt-4">
+                    <PicksGroup title="Global Bucket List" flag="🌍" picks={GLOBAL_PICKS} onPick={usePickAsLocation} />
+                  </div>
+                </section>
+
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
                   <h2 className="text-xl font-bold mb-3">Group To-Do 📋</h2>
                   <div className="h-2 bg-input rounded-full overflow-hidden mb-1">
                     <div className="h-full bg-brand-gradient transition-all" style={{ width: `${progress}%` }} />
@@ -1266,5 +1306,61 @@ function EventsPage() {
         </div>
       )}
     </main>
+  );
+}
+
+function PicksGroup({
+  title,
+  flag,
+  picks,
+  onPick,
+}: {
+  title: string;
+  flag: string;
+  picks: TopPick[];
+  onPick: (p: TopPick) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? picks : picks.slice(0, 4);
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+          <span className="mr-1">{flag}</span>{title}
+        </p>
+        {picks.length > 4 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="text-[11px] text-brand-yellow font-bold hover:underline"
+          >
+            {expanded ? "Show less" : `Show all ${picks.length}`}
+          </button>
+        )}
+      </div>
+      <ul className="space-y-1.5">
+        {visible.map((p) => (
+          <li key={p.name}>
+            <button
+              type="button"
+              onClick={() => onPick(p)}
+              className="w-full text-left bg-input hover:border-brand-yellow border border-border rounded-lg px-2.5 py-2 transition-colors group"
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-base leading-none mt-0.5">{p.emoji}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-bold text-sm truncate group-hover:text-brand-yellow">{p.name}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold shrink-0">{p.category}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">{p.area}</div>
+                  <div className="text-[11px] text-muted-foreground/80 line-clamp-1">{p.blurb}</div>
+                </div>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
