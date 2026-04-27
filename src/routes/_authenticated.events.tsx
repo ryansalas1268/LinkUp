@@ -853,6 +853,16 @@ function EventsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
+                        {activeEvent.host_id === user?.id && (
+                          <button
+                            onClick={renameEvent}
+                            className="text-muted-foreground hover:text-brand-yellow"
+                            title="Rename event"
+                            aria-label="Rename event"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
                         {activeLifecycle && (() => {
                           const meta = getLifecycleMeta(activeLifecycle);
                           return (
