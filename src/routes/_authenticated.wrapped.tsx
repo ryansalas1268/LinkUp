@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Sparkles, Calendar, DollarSign, MapPin, Trophy, X, Users, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { DC_PICKS, GLOBAL_PICKS, type Pick as TopPick } from "@/lib/topPicks";
 import coverRooftop from "@/assets/event-rooftop.jpg";
 import coverVolleyball from "@/assets/event-volleyball.jpg";
 import coverPotluck from "@/assets/event-potluck.jpg";
@@ -411,7 +413,25 @@ function WrappedPage() {
         </section>
       </div>
 
+      {/* Top Picks — inspiration for next year's plans */}
+      <section className="bg-card border border-border rounded-2xl p-6 mb-8">
+        <div className="flex items-baseline justify-between mb-1">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-brand-pink" /> Top Picks for Next Year
+          </h2>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Inspiration</span>
+        </div>
+        <p className="text-xs text-muted-foreground mb-5">
+          Hand-picked spots to fuel your next plans. Tap any spot to copy it for your next event.
+        </p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <PicksGroup title="Local — Washington, D.C." flag="🏛️" picks={DC_PICKS} />
+          <PicksGroup title="Global Bucket List" flag="🌍" picks={GLOBAL_PICKS} />
+        </div>
+      </section>
+
       {/* Event history */}
+
       <section className="bg-card border border-border rounded-2xl p-6">
         <h2 className="text-xl font-bold mb-1">Event History</h2>
         <p className="text-xs text-muted-foreground mb-4">{sortedHistory.length} event{sortedHistory.length === 1 ? "" : "s"} in {year} — tap to revisit.</p>
@@ -510,6 +530,61 @@ function Standout({
         <div className="font-bold truncate">{value}</div>
         {sub && <div className="text-xs text-muted-foreground truncate">{sub}</div>}
       </div>
+    </div>
+  );
+}
+
+function PicksGroup({ title, flag, picks }: { title: string; flag: string; picks: TopPick[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? picks : picks.slice(0, 6);
+  const copyPick = async (p: TopPick) => {
+    const label = `${p.name} — ${p.area}`;
+    try {
+      await navigator.clipboard.writeText(label);
+      toast.success(`Copied "${p.name}"`);
+    } catch {
+      toast.error("Couldn't copy");
+    }
+  };
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+          <span className="mr-1">{flag}</span>{title}
+        </p>
+        {picks.length > 6 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="text-[11px] text-brand-yellow font-bold hover:underline"
+          >
+            {expanded ? "Show less" : `Show all ${picks.length}`}
+          </button>
+        )}
+      </div>
+      <ul className="space-y-2">
+        {visible.map((p) => (
+          <li key={p.name}>
+            <button
+              type="button"
+              onClick={() => copyPick(p)}
+              className="w-full text-left bg-input hover:border-brand-yellow border border-border rounded-lg px-3 py-2.5 transition-colors group"
+            >
+              <div className="flex items-start gap-2.5">
+                <span className="text-lg leading-none mt-0.5">{p.emoji}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="font-bold text-sm group-hover:text-brand-yellow">{p.name}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold shrink-0">{p.category}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">{p.area}</div>
+                  <div className="text-xs text-muted-foreground/80 mt-0.5">{p.blurb}</div>
+                </div>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
