@@ -413,8 +413,69 @@ function WrappedPage() {
         </section>
       </div>
 
-      {/* Top Picks — subtle inspiration nudge */}
+      {/* Local & Global breakdown + curated recommendations */}
+      {(() => {
+        const isLocal = (loc: string | null) =>
+          !!loc && /\b(d\.?c\.?|washington|dmv|arlington|alexandria|bethesda|silver spring|georgetown|foggy bottom|capitol hill|navy yard|nova|virginia|maryland)\b/i.test(loc);
+        const localCount = events.filter((e) => isLocal(e.location)).length;
+        const awayCount = events.filter((e) => e.location && !isLocal(e.location)).length;
+        const total = Math.max(1, localCount + awayCount);
+        const localPct = Math.round((localCount / total) * 100);
+        const awayPct = 100 - localPct;
+        // Recommend the side they've explored less.
+        const leanLocal = awayCount >= localCount;
+        const localRecs = DC_PICKS.slice(0, 3);
+        const globalRecs = GLOBAL_PICKS.slice(0, 3);
+        return (
+          <section className="bg-card border border-border rounded-2xl p-6 mb-8">
+            <div className="flex items-baseline justify-between mb-1">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-brand-pink" /> Local vs Global
+              </h2>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Your year on the map</span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              {localCount + awayCount === 0
+                ? "No locations logged yet — add some on your next event!"
+                : leanLocal
+                  ? "You stayed local most of the year. Maybe a trip is in order?"
+                  : "You traveled a lot this year! Don't forget the gems back home."}
+            </p>
+
+            {(localCount + awayCount) > 0 && (
+              <div className="mb-5">
+                <div className="flex h-3 rounded-full overflow-hidden bg-input">
+                  <div className="bg-brand-yellow" style={{ width: `${localPct}%` }} />
+                  <div className="bg-brand-pink" style={{ width: `${awayPct}%` }} />
+                </div>
+                <div className="flex justify-between text-xs mt-2">
+                  <span className="font-bold text-brand-yellow">🏛️ DC / Local · {localCount} ({localPct}%)</span>
+                  <span className="font-bold text-brand-pink">🌍 Global · {awayCount} ({awayPct}%)</span>
+                </div>
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <RecCard
+                icon={<Landmark className="w-4 h-4" />}
+                heading="Top spots in D.C."
+                badge={leanLocal ? undefined : "Recommended for you"}
+                picks={localRecs}
+              />
+              <RecCard
+                icon={<Globe2 className="w-4 h-4" />}
+                heading="Bucket list, worldwide"
+                badge={leanLocal ? "Recommended for you" : undefined}
+                picks={globalRecs}
+              />
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Subtle additional inspiration */}
       <SuggestionsBox />
+
 
       {/* Event history */}
 
