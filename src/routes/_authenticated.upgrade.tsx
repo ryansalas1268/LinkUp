@@ -2,20 +2,15 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Star, Check, X, Sparkles, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useSubscription } from "@/hooks/useSubscription";
-import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
-import { supabase } from "@/integrations/supabase/client";
-import { getStripeEnvironment } from "@/lib/stripe";
+import { useSubscription, type MockPlanId } from "@/hooks/useSubscription";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/upgrade")({
   component: UpgradePage,
 });
 
-type PlanId = "premium_monthly" | "premium_yearly" | "premium_lifetime";
-
 interface Plan {
-  id: PlanId;
+  id: MockPlanId;
   name: string;
   price: string;
   period: string;
@@ -67,77 +62,49 @@ const COMPARE = [
 
 const FAQS = [
   {
-    q: "Can I cancel anytime?",
-    a: "Yes. Cancel from the billing portal and you'll keep Premium access until the end of your current billing period.",
+    q: "Is this a real payment?",
+    a: "No. This is a capstone project demo — upgrades are simulated locally so reviewers can experience the Premium UX without entering payment details.",
   },
   {
-    q: "What payment methods are accepted?",
-    a: "All major credit and debit cards via Stripe. In test mode, use card 4242 4242 4242 4242.",
+    q: "Can I cancel anytime?",
+    a: "Yes. Use the Manage plan button to cancel; you'll keep Premium access until the end of your simulated billing period.",
   },
   {
     q: "Can I switch between monthly and yearly?",
-    a: "Yes. Plan changes take effect immediately and are prorated automatically.",
+    a: "Yes. Choose another plan and the change applies immediately in this demo.",
   },
   {
     q: "Is the Lifetime plan really forever?",
-    a: "Yes — one payment, Premium for the lifetime of your LinkUp account, including all future Premium features.",
+    a: "In this demo, Lifetime stays active until you reset it from the Manage plan menu.",
   },
 ];
 
 function UpgradePage() {
   const { user, profile } = useAuth();
-  const { isActive, subscription, loading } = useSubscription();
+  const { isActive, subscription, loading, subscribe, cancel, reset } = useSubscription();
   const navigate = useNavigate();
-  const [selected, setSelected] = useState<PlanId | null>(null);
-  const [openingPortal, setOpeningPortal] = useState(false);
+  const [processing, setProcessing] = useState<MockPlanId | null>(null);
 
-  const openPortal = async () => {
-    setOpeningPortal(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-portal-session", {
-        body: {
-          returnUrl: `${window.location.origin}/upgrade`,
-          environment: getStripeEnvironment(),
-        },
-      });
-      if (error || !data?.url) throw new Error(error?.message || "Failed to open billing portal");
-      window.open(data.url, "_blank");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setOpeningPortal(false);
-    }
+  const handleSubscribe = async (planId: MockPlanId) => {
+    if (!user) return;
+    setProcessing(planId);
+    // Simulate a brief network delay so it feels like a real checkout
+    await new Promise((r) => setTimeout(r, 700));
+    subscribe(planId);
+    setProcessing(null);
+    toast.success("🎉 Welcome to LinkUp Premium!");
+    navigate({ to: "/checkout/return", search: { session_id: `demo_${Date.now()}` } });
   };
 
-  if (selected) {
-    return (
-      <main className="max-w-3xl mx-auto px-6 py-8">
-        <button
-          onClick={() => setSelected(null)}
-          className="text-sm text-muted-foreground hover:text-brand-yellow mb-4"
-        >
-          ← Back to plans
-        </button>
-        <h1 className="text-3xl font-bold mb-2">
-          Complete your{" "}
-          <span className="bg-brand-gradient bg-clip-text text-transparent">
-            {PLANS.find((p) => p.id === selected)?.name}
-          </span>{" "}
-          purchase
-        </h1>
-        <p className="text-muted-foreground mb-6">
-          Secure checkout powered by Stripe. Use test card{" "}
-          <code className="text-brand-yellow">4242 4242 4242 4242</code>.
-        </p>
-        <StripeEmbeddedCheckout
-          priceId={selected}
-          userId={user?.id}
-          customerEmail={user?.email ?? undefined}
-          returnUrl={`${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`}
-        />
-      </main>
-    );
-  }
+  const handleCancel = () => {
+    cancel();
+    toast.success("Plan canceled. You'll keep Premium until your period ends.");
+  };
+
+  const handleReset = () => {
+    reset();
+    toast.success("Premium removed.");
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-10">
@@ -165,57 +132,98 @@ function UpgradePage() {
 
       {/* Plan cards */}
       <section className="grid md:grid-cols-3 gap-6 mb-16">
-        {PLANS.map((p) => (
-          <div
-            key={p.id}
-            className={`relative bg-card border rounded-2xl p-6 flex flex-col ${
-              p.highlight ? "border-brand-yellow shadow-brand" : "border-border"
-            }`}
-          >
-            {p.badge && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-gradient text-black font-bold text-xs px-3 py-1 rounded-full">
-                {p.badge}
-              </span>
-            )}
-            <h3 className="text-xl font-bold">{p.name}</h3>
-            <div className="mt-3 mb-2">
-              <span className="text-4xl font-bold">{p.price}</span>{" "}
-              <span className="text-sm text-muted-foreground">{p.period}</span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">{p.description}</p>
+        {PLANS.map((p) => {
+          const isCurrent = isActive && subscription?.price_id === p.id;
+          return (
+            <div
+              key={p.id}
+              className={`relative bg-card border rounded-2xl p-6 flex flex-col ${
+                p.highlight ? "border-brand-yellow shadow-brand" : "border-border"
+              }`}
+            >
+              {p.badge && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-gradient text-black font-bold text-xs px-3 py-1 rounded-full">
+                  {p.badge}
+                </span>
+              )}
+              <h3 className="text-xl font-bold">{p.name}</h3>
+              <div className="mt-3 mb-2">
+                <span className="text-4xl font-bold">{p.price}</span>{" "}
+                <span className="text-sm text-muted-foreground">{p.period}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">{p.description}</p>
 
-            <ul className="space-y-2 text-sm flex-1 mb-6">
-              {COMPARE.filter((c) => c.premium === true).slice(0, 6).map((c) => (
-                <li key={c.name} className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-going mt-0.5 shrink-0" strokeWidth={3} />
-                  <span>{c.name}</span>
-                </li>
-              ))}
-            </ul>
+              <ul className="space-y-2 text-sm flex-1 mb-6">
+                {COMPARE.filter((c) => c.premium === true).slice(0, 6).map((c) => (
+                  <li key={c.name} className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-going mt-0.5 shrink-0" strokeWidth={3} />
+                    <span>{c.name}</span>
+                  </li>
+                ))}
+              </ul>
 
-            {isActive ? (
               <button
-                onClick={openPortal}
-                disabled={openingPortal}
-                className="bg-input border border-border hover:bg-card text-foreground font-bold py-3 rounded-full transition-colors disabled:opacity-60"
-              >
-                {openingPortal ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Manage plan"}
-              </button>
-            ) : (
-              <button
-                onClick={() => setSelected(p.id)}
-                className={`font-bold py-3 rounded-full transition-transform hover:scale-[1.02] ${
+                onClick={() => handleSubscribe(p.id)}
+                disabled={processing !== null || isCurrent}
+                className={`font-bold py-3 rounded-full transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100 ${
                   p.highlight
                     ? "bg-brand-gradient text-black shadow-brand"
                     : "bg-input border border-border hover:bg-card text-foreground"
                 }`}
               >
-                Choose {p.name}
+                {processing === p.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                ) : isCurrent ? (
+                  "Current plan"
+                ) : isActive ? (
+                  `Switch to ${p.name}`
+                ) : (
+                  `Choose ${p.name}`
+                )}
+              </button>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* Manage plan */}
+      {isActive && subscription && (
+        <section className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-16 max-w-2xl mx-auto">
+          <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-brand-yellow" /> Manage your plan
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Current plan: <span className="text-brand-yellow font-bold">{subscription.price_id.replace("premium_", "")}</span>
+            {subscription.current_period_end && (
+              <>
+                {" "}· Renews{" "}
+                <span className="text-foreground">
+                  {new Date(subscription.current_period_end).toLocaleDateString()}
+                </span>
+              </>
+            )}
+            {subscription.cancel_at_period_end && (
+              <span className="ml-2 text-brand-pink font-bold">(canceling at period end)</span>
+            )}
+          </p>
+          <div className="flex gap-3 flex-wrap">
+            {subscription.price_id !== "premium_lifetime" && !subscription.cancel_at_period_end && (
+              <button
+                onClick={handleCancel}
+                className="bg-input border border-border hover:bg-card text-foreground font-bold py-2 px-4 rounded-full transition-colors text-sm"
+              >
+                Cancel plan
               </button>
             )}
+            <button
+              onClick={handleReset}
+              className="bg-input border border-border hover:bg-card text-muted-foreground font-bold py-2 px-4 rounded-full transition-colors text-sm"
+            >
+              Reset (demo)
+            </button>
           </div>
-        ))}
-      </section>
+        </section>
+      )}
 
       {/* Comparison table */}
       <section className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-16">
