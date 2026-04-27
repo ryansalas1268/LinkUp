@@ -146,25 +146,17 @@ function EventsPage() {
   const { upcomingEvents, pastEvents } = (() => {
     const now = Date.now();
     const withTime = events.map((e) => ({ e, t: e.scheduled_at ? +new Date(e.scheduled_at) : null }));
-    const upcomingArr = withTime.filter((x) => x.t !== null && (x.t as number) >= now);
+    const upcomingArr = withTime.filter((x) => x.t === null || (x.t as number) >= now);
     const pastArr = withTime.filter((x) => x.t !== null && (x.t as number) < now);
-    const undated = withTime.filter((x) => x.t === null);
-
-    if (sortMode === "recent") {
-      // Order by created_at desc within each group
-      const byCreated = (a: typeof withTime[number], b: typeof withTime[number]) =>
-        +new Date(b.e.created_at ?? 0) - +new Date(a.e.created_at ?? 0);
-      return {
-        upcomingEvents: [...upcomingArr, ...undated].sort(byCreated).map((x) => x.e),
-        pastEvents: [...pastArr].sort(byCreated).map((x) => x.e),
-      };
-    }
-    // soonest: upcoming nearest-first, past most-recent-first
     return {
-      upcomingEvents: [
-        ...upcomingArr.sort((a, b) => (a.t as number) - (b.t as number)),
-        ...undated.sort((a, b) => +new Date(b.e.created_at ?? 0) - +new Date(a.e.created_at ?? 0)),
-      ].map((x) => x.e),
+      upcomingEvents: upcomingArr
+        .sort((a, b) => {
+          if (a.t === null && b.t === null) return +new Date(b.e.created_at ?? 0) - +new Date(a.e.created_at ?? 0);
+          if (a.t === null) return 1;
+          if (b.t === null) return -1;
+          return (a.t as number) - (b.t as number);
+        })
+        .map((x) => x.e),
       pastEvents: pastArr.sort((a, b) => (b.t as number) - (a.t as number)).map((x) => x.e),
     };
   })();
