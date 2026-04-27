@@ -129,6 +129,17 @@ function EventsPage() {
     setTasks(t ?? []);
     setExpenses(ex ?? []);
 
+    // keep my-rsvps map in sync for sidebar badges
+    if (user) {
+      const mine = (r ?? []).find((x: RsvpRow) => x.user_id === user.id);
+      setMyRsvpsByEvent((prev) => {
+        const next = { ...prev };
+        if (mine) next[eventId] = mine as RsvpRow;
+        else delete next[eventId];
+        return next;
+      });
+    }
+
     if (p && p.length) {
       const { data: v } = await supabase.from("time_votes").select("*").in("proposal_id", p.map((x) => x.id));
       setVotes(v ?? []);
