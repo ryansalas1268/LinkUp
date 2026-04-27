@@ -504,7 +504,7 @@ function EventsPage() {
         </div>
       ) : (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-          <aside className="space-y-4">
+          <aside className={`space-y-4 ${activeEvent ? "hidden lg:block" : ""}`}>
             <div className="space-y-2">
               <h2 className="text-sm font-bold text-muted-foreground uppercase mb-2">Your events</h2>
               {events.map((e) => {
@@ -568,7 +568,13 @@ function EventsPage() {
           {activeEvent && (
             <div className="grid xl:grid-cols-[2fr_1fr] gap-6">
               <div className="space-y-6">
-                <section className="bg-card border border-border rounded-xl p-6">
+                <button
+                  onClick={() => setActiveId(null)}
+                  className="lg:hidden flex items-center gap-1 text-sm font-bold text-brand-yellow hover:underline -mb-2"
+                >
+                  ← Back to events
+                </button>
+                <section className="bg-card border border-border rounded-xl p-4 sm:p-6">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
