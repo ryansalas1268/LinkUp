@@ -275,7 +275,7 @@ function EventsPage() {
     loadEvents();
   };
 
-
+  const setRSVP = async (status: "going" | "maybe" | "no") => {
     if (!activeId || !user) return;
     const { error } = await supabase
       .from("rsvps")
