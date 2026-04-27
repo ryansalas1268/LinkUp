@@ -240,11 +240,11 @@ function FriendsPage() {
                 onChange={(e) => setInviteContact(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendInvite()}
                 placeholder="friend@email.com or +1 555 123 4567"
-                className="flex-1 bg-input px-4 py-3 rounded-lg border border-border focus:outline-none focus:border-brand-yellow"
+                className="flex-1 bg-input px-4 py-2 rounded-lg border border-border focus:outline-none focus:border-brand-yellow text-sm"
               />
               <button
                 onClick={sendInvite}
-                className="bg-brand-gradient text-black font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform"
+                className="bg-brand-gradient text-black font-bold px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 hover:scale-[1.02] transition-transform text-sm"
               >
                 {isPhone(inviteContact) && !isEmail(inviteContact) ? (
                   <><MessageSquare className="w-4 h-4" /> Text invite</>
