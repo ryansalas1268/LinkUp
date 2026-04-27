@@ -20,7 +20,15 @@ interface TaskRow {
   task_name: string;
   completed: boolean;
   event_id: string;
+  priority: "high" | "med" | "low";
 }
+
+const PRIORITY_RANK: Record<"high" | "med" | "low", number> = { high: 0, med: 1, low: 2 };
+const PRIORITY_META: Record<"high" | "med" | "low", { label: string; className: string }> = {
+  high: { label: "High", className: "bg-no/20 text-no border-no" },
+  med: { label: "Med", className: "bg-maybe/20 text-maybe border-maybe" },
+  low: { label: "Low", className: "bg-going/20 text-going border-going" },
+};
 
 const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -44,7 +52,7 @@ function CalendarPage() {
       if (user) {
         const { data: ts } = await supabase
           .from("tasks")
-          .select("id, task_name, completed, event_id, events(title)")
+          .select("id, task_name, completed, event_id, priority, events(title)")
           .or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`);
         setTasks(
           (ts ?? []).map((t: any) => ({
@@ -52,6 +60,7 @@ function CalendarPage() {
             task_name: t.task_name,
             completed: t.completed,
             event_id: t.event_id,
+            priority: t.priority,
             event_title: t.events?.title,
           }))
         );
@@ -153,19 +162,60 @@ function CalendarPage() {
 
           <section className="bg-card border border-border rounded-xl p-6">
             <h2 className="text-xl font-bold mb-1">My Tasks 📋</h2>
-            <p className="text-sm text-muted-foreground mb-4">Across all your events</p>
-            <ul className="space-y-2">
-              {tasks.length === 0 && <li className="text-sm text-muted-foreground italic">No tasks yet.</li>}
-              {tasks.map((t) => (
-                <li key={t.id} className="flex items-center gap-2 py-2 border-b border-border last:border-0">
-                  <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t)} className="accent-brand-yellow w-4 h-4" />
-                  <span className={t.completed ? "line-through text-muted-foreground" : ""}>
-                    {t.task_name}
-                    {t.event_title && <span className="text-xs text-muted-foreground"> ({t.event_title})</span>}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm text-muted-foreground mb-4">Grouped by event, sorted by urgency</p>
+            {tasks.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">No tasks yet.</p>
+            ) : (
+              <div className="space-y-5">
+                {Object.entries(
+                  tasks.reduce<Record<string, typeof tasks>>((acc, t) => {
+                    const key = t.event_id;
+                    (acc[key] ||= []).push(t);
+                    return acc;
+                  }, {})
+                )
+                  .map(([eventId, group]) => {
+                    const sorted = [...group].sort((a, b) => {
+                      if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                      return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+                    });
+                    const topRank = Math.min(
+                      ...group.filter((t) => !t.completed).map((t) => PRIORITY_RANK[t.priority]),
+                      99
+                    );
+                    return { eventId, sorted, title: group[0].event_title ?? "Event", topRank };
+                  })
+                  .sort((a, b) => a.topRank - b.topRank)
+                  .map(({ eventId, sorted, title }) => (
+                    <div key={eventId}>
+                      <h3 className="text-sm font-bold text-brand-pink uppercase tracking-wide mb-2">
+                        {title}
+                      </h3>
+                      <ul className="space-y-1">
+                        {sorted.map((t) => {
+                          const meta = PRIORITY_META[t.priority];
+                          return (
+                            <li key={t.id} className="flex items-center gap-2 py-2 border-b border-border last:border-0">
+                              <input
+                                type="checkbox"
+                                checked={t.completed}
+                                onChange={() => toggleTask(t)}
+                                className="accent-brand-yellow w-4 h-4"
+                              />
+                              <span className={`flex-1 ${t.completed ? "line-through text-muted-foreground" : ""}`}>
+                                {t.task_name}
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.className}`}>
+                                {meta.label}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))}
+              </div>
+            )}
           </section>
         </div>
       </div>
