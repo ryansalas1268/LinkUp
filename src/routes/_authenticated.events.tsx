@@ -30,7 +30,8 @@ const KEYWORD_COVERS: { match: RegExp; img: string }[] = [
   { match: /picnic|blossom|park/i, img: coverPicnic },
   { match: /brunch|breakfast|mimosa|pancake/i, img: coverBrunch },
 ];
-function coverFor(title: string): string | null {
+function coverFor(title: string, customUrl?: string | null): string | null {
+  if (customUrl) return customUrl;
   if (COVER_BY_TITLE[title]) return COVER_BY_TITLE[title];
   for (const k of KEYWORD_COVERS) if (k.match.test(title)) return k.img;
   return null;
@@ -48,6 +49,7 @@ interface EventRow {
   scheduled_at: string | null;
   ended_at: string | null;
   host_id: string;
+  cover_image_url?: string | null;
 }
 
 interface RsvpRow {
@@ -116,7 +118,8 @@ function EventsPage() {
   const [shares, setShares] = useState<ExpenseShareRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileRow>>({});
   const [showNew, setShowNew] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "" });
+  const [newEvent, setNewEvent] = useState({ title: "", description: "", location: "", scheduled_at: "", cover_image_url: "" });
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [newTask, setNewTask] = useState({ name: "", priority: "med" as const });
   const [newProposal, setNewProposal] = useState("");
   const [newExpense, setNewExpense] = useState({
@@ -197,6 +200,24 @@ function EventsPage() {
   useEffect(() => { loadAll(); }, [user?.id]);
   useEffect(() => { if (activeId) loadEventDetails(activeId); }, [activeId]);
 
+  const uploadCover = async (file: File) => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5 MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image"); return; }
+    setUploadingCover(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("event-covers").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type,
+    });
+    if (error) { toast.error(error.message); setUploadingCover(false); return; }
+    const { data } = supabase.storage.from("event-covers").getPublicUrl(path);
+    setNewEvent((prev) => ({ ...prev, cover_image_url: data.publicUrl }));
+    setUploadingCover(false);
+  };
+
   const createEvent = async () => {
     if (!user) return;
     // BR010: title required, max 50 chars
@@ -223,12 +244,13 @@ function EventsPage() {
         description: newEvent.description || null,
         location: newEvent.location || null,
         scheduled_at: newEvent.scheduled_at || null,
+        cover_image_url: newEvent.cover_image_url || null,
       })
       .select()
       .single();
     if (error) { toast.error(error.message); return; }
     toast.success("Event created!");
-    setNewEvent({ title: "", description: "", location: "", scheduled_at: "" });
+    setNewEvent({ title: "", description: "", location: "", scheduled_at: "", cover_image_url: "" });
     setShowNew(false);
     setEvents([data, ...events]);
     setActiveId(data.id);
@@ -529,6 +551,38 @@ function EventsPage() {
             className="w-full bg-input px-4 py-3 rounded-lg border border-border focus:outline-none focus:border-brand-yellow"
             rows={2}
           />
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground font-bold mb-2">Cover image (optional)</label>
+            {newEvent.cover_image_url ? (
+              <div className="relative rounded-lg overflow-hidden border border-border">
+                <img src={newEvent.cover_image_url} alt="Cover preview" className="w-full h-40 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setNewEvent({ ...newEvent, cover_image_url: "" })}
+                  className="absolute top-2 right-2 bg-black/70 hover:bg-black text-white rounded-full p-1.5"
+                  aria-label="Remove cover image"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 w-full bg-input border border-dashed border-border rounded-lg px-4 py-6 cursor-pointer hover:border-brand-yellow transition-colors">
+                <Plus className="w-4 h-4" />
+                <span className="text-sm">{uploadingCover ? "Uploading…" : "Upload cover image"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingCover}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadCover(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            )}
+          </div>
           <div className="flex gap-2">
             <button onClick={createEvent} className="bg-brand-gradient text-black font-bold px-5 py-2 rounded-lg">Create</button>
             <button onClick={() => setShowNew(false)} className="bg-input px-5 py-2 rounded-lg">Cancel</button>
@@ -548,7 +602,7 @@ function EventsPage() {
               {events.map((e) => {
                 const lc = lifecycleFor(e, myRsvpsByEvent[e.id]);
                 const meta = getLifecycleMeta(lc);
-                const cover = coverFor(e.title);
+                const cover = coverFor(e.title, e.cover_image_url);
                 return (
                   <button
                     key={e.id}
@@ -660,7 +714,7 @@ function EventsPage() {
                 </button>
                 <section className="sm:bg-card sm:border sm:border-border rounded-xl overflow-hidden sm:p-0 -mt-4 sm:mt-0">
                   {(() => {
-                    const cover = coverFor(activeEvent.title);
+                    const cover = coverFor(activeEvent.title, activeEvent.cover_image_url);
                     return cover ? (
                       <img
                         src={cover}
