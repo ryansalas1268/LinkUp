@@ -1325,25 +1325,57 @@ function EventsPage() {
                     <button onClick={addTask} className="shrink-0 bg-brand-gradient text-black font-bold px-4 py-2 rounded-lg text-sm">Add</button>
                   </div>
 
-                  <ul className="space-y-2">
-                    {tasks.map((t) => (
-                      <li key={t.id} className="flex items-center gap-2 py-2 border-b border-border last:border-0">
-                        <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t)} className="accent-brand-yellow w-4 h-4" />
-                        <span className={t.completed ? "line-through text-muted-foreground flex-1" : "flex-1"}>
-                          {priorityIcon[t.priority]} {t.task_name}
-                        </span>
-                        {activeEvent.host_id === user?.id && (
+                  <div className="space-y-2">
+                    {([
+                      { id: "high" as const, label: "High priority", icon: "🔴" },
+                      { id: "med" as const, label: "Medium priority", icon: "🟡" },
+                      { id: "low" as const, label: "Low priority", icon: "🟢" },
+                    ]).map((group) => {
+                      const groupTasks = tasks.filter((t) => t.priority === group.id);
+                      if (groupTasks.length === 0) return null;
+                      const remaining = groupTasks.filter((t) => !t.completed).length;
+                      const isOpen = openTaskGroups[group.id];
+                      return (
+                        <div key={group.id} className="bg-input border border-border rounded-lg overflow-hidden">
                           <button
-                            onClick={() => deleteTask(t)}
-                            className="text-muted-foreground hover:text-destructive shrink-0"
-                            aria-label="Remove task"
+                            type="button"
+                            onClick={() => setOpenTaskGroups((prev) => ({ ...prev, [group.id]: !prev[group.id] }))}
+                            className="w-full flex items-center gap-2 px-3 py-2 hover:bg-card transition-colors"
                           >
-                            <X className="w-4 h-4" />
+                            {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                            <span className="text-sm font-bold flex-1 text-left">{group.icon} {group.label}</span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${remaining > 0 ? "bg-brand-gradient text-black" : "bg-muted/40 text-muted-foreground"}`}>
+                              {remaining > 0 ? `${remaining} left` : "All done"}
+                            </span>
                           </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+                          {isOpen && (
+                            <ul className="px-3 pb-2">
+                              {groupTasks.map((t) => (
+                                <li key={t.id} className="flex items-center gap-2 py-2 border-b border-border last:border-0">
+                                  <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t)} className="accent-brand-yellow w-4 h-4" />
+                                  <span className={t.completed ? "line-through text-muted-foreground flex-1 text-sm" : "flex-1 text-sm"}>
+                                    {t.task_name}
+                                  </span>
+                                  {activeEvent.host_id === user?.id && (
+                                    <button
+                                      onClick={() => deleteTask(t)}
+                                      className="text-muted-foreground hover:text-destructive shrink-0"
+                                      aria-label="Remove task"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {tasks.length === 0 && (
+                      <p className="text-sm text-muted-foreground italic">No tasks yet — add one above.</p>
+                    )}
+                  </div>
                 </section>
 
                 <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
