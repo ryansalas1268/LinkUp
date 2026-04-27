@@ -447,12 +447,12 @@ function EventsPage() {
   const priorityIcon = { high: "🔴", med: "🟡", low: "🟢" };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold">My Events</h1>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-8">
+      <div className={`flex items-center justify-between mb-3 sm:mb-6 gap-3 ${activeId ? "hidden lg:flex" : ""}`}>
+        <h1 className="text-lg sm:text-3xl font-bold">My Events</h1>
         <button
           onClick={() => setShowNew(!showNew)}
-          className="bg-brand-gradient text-black font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg flex items-center gap-2 hover:scale-105 transition-transform text-sm sm:text-base whitespace-nowrap"
+          className="bg-brand-gradient text-black font-bold px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-lg flex items-center gap-1.5 hover:scale-105 transition-transform text-sm sm:text-base whitespace-nowrap"
         >
           <Plus className="w-4 h-4" /> <span className="hidden xs:inline">New Event</span><span className="xs:hidden">New</span>
         </button>
@@ -567,18 +567,18 @@ function EventsPage() {
 
           {activeEvent && (
             <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
-              <div className="space-y-8 sm:space-y-6">
+              <div className="space-y-6 sm:space-y-6">
                 <button
                   onClick={() => setActiveId(null)}
-                  className="lg:hidden flex items-center gap-1 text-sm font-bold text-brand-yellow hover:underline -mb-2"
+                  className="lg:hidden flex items-center gap-1 text-xs font-bold text-brand-yellow hover:underline"
                 >
                   ← Back to events
                 </button>
-                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6">
+                <section className="sm:bg-card sm:border sm:border-border rounded-xl p-0 sm:p-6 -mt-4 sm:mt-0">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h2 className="text-2xl font-bold">{activeEvent.title}</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold">{activeEvent.title}</h2>
                         {activeLifecycle && (() => {
                           const meta = getLifecycleMeta(activeLifecycle);
                           return (
