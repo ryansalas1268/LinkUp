@@ -140,6 +140,7 @@ function EventsPage() {
   const [listMode, setListMode] = useState<"upcoming" | "past">("upcoming");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [openTaskGroups, setOpenTaskGroups] = useState<Record<"high" | "med" | "low", boolean>>({ high: true, med: false, low: false });
 
   const activeEvent = events.find((e) => e.id === activeId);
 
