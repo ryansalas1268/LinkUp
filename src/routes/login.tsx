@@ -49,6 +49,8 @@ function LoginPage() {
       toast.error(friendlyLoginError(error.message));
       return;
     }
+    // Auto-reseed permanent demo account (Ryan25) if its sample data is missing
+    supabase.rpc("ensure_demo_account_seeded").then(() => {});
     toast.success(`Welcome back!`);
     navigate({ to: "/events" });
   };
