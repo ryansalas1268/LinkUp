@@ -1,10 +1,16 @@
-Switch to Build mode and trigger a rebuild to recover the stuck preview (the runtime error showed `virtual:tanstack-start-client-entry` failed to load — a preview environment hiccup, not a code issue).
+## Reset Ryan25 password to `Demo123!`
 
-## Steps
-1. Verify dev-server logs to confirm it's a transient bundling/HMR issue rather than a real code problem.
-2. Touch a harmless file (or restart the dev server) to force Vite to re-bundle the client entry.
-3. Confirm the preview reloads and LinkUp renders correctly.
+Run a one-line SQL migration that updates the password for the Ryan25 demo account (`ryanjsalas@gwu.edu`, user id `a64682e2-f65f-4436-9007-1425ab98b4b2`) in `auth.users` using Supabase's bundled `crypt()` + `gen_salt('bf')`.
 
-## Notes
-- No code/feature changes — your LinkUp app, README, calendar dropdowns, and everything else stay exactly as they are.
-- If the rebuild doesn't clear it, fall back to the published URL (https://linkup4210.lovable.app) while we investigate further.
+```sql
+UPDATE auth.users
+SET encrypted_password = crypt('Demo123!', gen_salt('bf')),
+    updated_at = now()
+WHERE id = 'a64682e2-f65f-4436-9007-1425ab98b4b2';
+```
+
+After this runs, you can log in as:
+- **Username:** `Ryan25` (or email `ryanjsalas@gwu.edu`)
+- **Password:** `Demo123!`
+
+No code or UI changes needed — the existing auto-reseed logic on login still keeps the demo data permanent.
