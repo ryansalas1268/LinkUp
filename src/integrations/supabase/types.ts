@@ -496,6 +496,7 @@ export type Database = {
         Args: { _event_id?: string; _is_direct: boolean; _title: string }
         Returns: string
       }
+      ensure_demo_account_seeded: { Args: never; Returns: undefined }
       get_email_for_username: { Args: { _username: string }; Returns: string }
       get_or_create_event_chat: { Args: { _event_id: string }; Returns: string }
       has_active_premium: {
