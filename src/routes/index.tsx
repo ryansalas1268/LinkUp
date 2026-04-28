@@ -25,7 +25,7 @@ function Index() {
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            RSVP, assign tasks, plan logistics, all in one place.
+            RSVP, Assign Tasks, Plan Logistics, All In One Place.
           </p>
           <div className="flex gap-4 justify-center pt-4">
             <Link
